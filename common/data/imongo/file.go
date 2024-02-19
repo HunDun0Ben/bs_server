@@ -1,4 +1,4 @@
-package data
+package imongo
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 

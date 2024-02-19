@@ -2,7 +2,7 @@ package main
 
 import (
 	"demo/app/router"
-	mcli "demo/common/data/mongodb"
+	mcli "demo/common/data/imongo"
 
 	"github.com/gin-gonic/gin"
 )

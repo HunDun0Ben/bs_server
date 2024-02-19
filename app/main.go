@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"demo/app/entities/file"
-	"demo/common/data/mongodb"
+	"demo/common/data/imongo"
 	"fmt"
 	"io/fs"
 	"log"
@@ -30,7 +30,7 @@ func main() {
 }
 
 func displayImg() {
-	collection := mongodb.FileDatabase().Collection("butterfly_img")
+	collection := imongo.FileDatabase().Collection("butterfly_img")
 	bf := new(file.ButterflyFile)
 	bf.Path = "/home/workspace/data/leedsbutterfly/images/0010001.png"
 
@@ -54,7 +54,7 @@ func displayImg() {
 }
 
 func insertImg() {
-	collection := mongodb.FileDatabase().Collection("butterfly_img")
+	collection := imongo.FileDatabase().Collection("butterfly_img")
 	err := filepath.WalkDir(imgsPath, func(path string, d fs.DirEntry, err error) error {
 		seg_suf := "_seg0"
 		if err != nil {
