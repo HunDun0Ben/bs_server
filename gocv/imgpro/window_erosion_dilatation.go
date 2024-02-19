@@ -7,8 +7,8 @@ import (
 )
 
 type TrackWindowErosionCxt struct {
-	ErosionElem int
-	ErosionSize int
+	MorphologyExElem int
+	MorphologyExSize int
 }
 
 type TrackWindowDilatationCxt struct {
@@ -18,12 +18,12 @@ type TrackWindowDilatationCxt struct {
 
 func (cxt *TrackWindowErosionCxt) process(src *gocv.Mat) *gocv.Mat {
 	dstp := NewSomeMat(*src)
-	if cxt.ErosionElem < 0 || cxt.ErosionElem > 2 {
-		cxt.ErosionElem = 0
+	if cxt.MorphologyExElem < 0 || cxt.MorphologyExElem > 2 {
+		cxt.MorphologyExElem = 0
 	}
 	kernel := gocv.GetStructuringElement(
-		gocv.MorphShape(cxt.ErosionElem),
-		image.Pt(2*cxt.ErosionSize+1, 2*cxt.ErosionSize+1))
+		gocv.MorphShape(cxt.MorphologyExElem),
+		image.Pt(2*cxt.MorphologyExSize+1, 2*cxt.MorphologyExSize+1))
 	gocv.Erode(*src, dstp, kernel)
 	return dstp
 }

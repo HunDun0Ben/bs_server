@@ -1,6 +1,8 @@
 package imgpro
 
 import (
+	"log"
+
 	"gocv.io/x/gocv"
 )
 
@@ -37,6 +39,10 @@ func (wrap *TrackWindowWrapper) CreateTrackbar(name string, max, posd int, onCha
 }
 
 func (wrap *TrackWindowWrapper) Dispaly() {
+	if wrap.context == nil {
+		log.Fatal("Context can't be nil")
+		return
+	}
 	wrap.SrcImgMat = gocv.IMRead(wrap.Path, gocv.IMReadColor)
 	wrap.DstImgMat = wrap.SrcImgMat
 	for {

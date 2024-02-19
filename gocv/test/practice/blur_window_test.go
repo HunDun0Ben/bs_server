@@ -26,7 +26,7 @@ func TestPerformanceBtCloneAndNew(t *testing.T) {
 	fmt.Printf("耗时 %.3fs\n", time.Since(a).Seconds())
 }
 
-func TestWindowDisplayMat(t *testing.T) {
+func TestBlurWindowDisplayMat(t *testing.T) {
 
 	filename := `/home/workspace/data/leedsbutterfly/images/0010001.png`
 	wrapper := imgpro.NewTrackWindowWrapper("Hello", filename)
