@@ -19,6 +19,7 @@ type TrackWindowWrapper struct {
 	barArray       []*gocv.Trackbar
 	oldBarPosArray []int
 	onChangeArray  []func(cxt *GenMatCxt, pos int) error
+	loadImg        bool
 }
 
 func NewTrackWindowWrapper(title, path string) *TrackWindowWrapper {
@@ -38,16 +39,24 @@ func (wrap *TrackWindowWrapper) CreateTrackbar(name string, max, posd int, onCha
 	wrap.oldBarPosArray = append(wrap.oldBarPosArray, 0)
 }
 
-func (wrap *TrackWindowWrapper) Dispaly() {
-	if wrap.context == nil {
-		log.Fatal("Context can't be nil")
-		return
-	}
+func (wrap *TrackWindowWrapper) LoadImg() {
 	wrap.SrcImgMat = gocv.IMRead(wrap.Path, gocv.IMReadColor)
 	wrap.DstImgMat = wrap.SrcImgMat
+	wrap.DstImgMat = wrap.SrcImgMat
+	wrap.loadImg = true
+}
+
+func (wrap *TrackWindowWrapper) Dispaly() {
+	if !wrap.loadImg {
+		wrap.LoadImg()
+	}
 	for {
 		var update = false
 		if len(wrap.barArray) > 0 {
+			if wrap.context == nil {
+				log.Fatal("Context can't be nil")
+				return
+			}
 			for i, v := range wrap.barArray {
 				if v.GetPos() != wrap.oldBarPosArray[i] {
 					wrap.onChangeArray[i](&wrap.context, v.GetPos())

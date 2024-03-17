@@ -18,7 +18,7 @@ func TestErosionAndDilatationWindow(t *testing.T) {
 	erosionWrapper.CreateTrackbar("Element:\n 0: Rect \n 1: Cross \n 2: Ellipse", max_elem, 0,
 		func(cxt *imgpro.GenMatCxt, pos int) error {
 			if testCxt, ok := (*cxt).(*imgpro.TrackWindowErosionCxt); ok {
-				testCxt.MorphologyExElem = pos
+				testCxt.ErosionElem = pos
 			} else {
 				log.Print("强转类型失败")
 			}
@@ -27,7 +27,7 @@ func TestErosionAndDilatationWindow(t *testing.T) {
 	erosionWrapper.CreateTrackbar("Kernel size:\n 2n +1", max_kernel_size, 0,
 		func(cxt *imgpro.GenMatCxt, pos int) error {
 			if testCxt, ok := (*cxt).(*imgpro.TrackWindowErosionCxt); ok {
-				testCxt.MorphologyExSize = pos
+				testCxt.ErosionSize = pos
 			} else {
 				log.Print("强转类型失败")
 			}
