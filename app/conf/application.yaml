@@ -1,0 +1,5 @@
+server:
+  name: bs-server
+  port: 8080
+log:
+  level: "debug"
