@@ -1,28 +1,84 @@
 package conf
 
 import (
-	"log"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )
 
-var GlobalViper *viper.Viper
+var GlobalViper *viper.Viper = viper.New()
+var AppViperMap map[string]*viper.Viper = make(map[string]*viper.Viper)
+var fs afero.Fs = afero.NewOsFs()
 
 // 初始化全局配置
 func InitConfig() {
-	GlobalViper = viper.New()
-
-	// 设置配置文件名、路径及格式
-	GlobalViper.SetConfigName("application") // 配置文件名，不带扩展名
-	GlobalViper.AddConfigPath("./conf")      // 配置文件所在路径
-	GlobalViper.SetConfigType("yaml")        // 配置文件类型
-
-	// 尝试读取配置文件
-	err := GlobalViper.ReadInConfig()
-	if err != nil {
-		log.Fatalf("Error reading config file, %s", err)
-	}
-
+	loadAllConfig()
 	// 也可以启用环境变量支持
 	GlobalViper.AutomaticEnv()
+}
+
+func loadAllConfig() error {
+	var app string
+	app, ok := os.LookupEnv("GOAPP")
+	if !ok {
+		app = ""
+	}
+	if err := loadConfigFiles(app); err != nil {
+		return err
+	}
+	return nil
+}
+
+// 加载目录下的所有 YAML 文件到对应的 viper 中
+// 并且聚合生成全局的 GLobalViper
+func loadConfigFiles(dir string) error {
+	// 遍历目录下的所有文件
+	err := afero.Walk(fs, dir,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			// 只处理 YAML 文件
+			if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" {
+				// 获取文件名作为 viper 的命名空间
+				configName := strings.Split(info.Name(), ".")[0]
+				// 创建一个新的 viper 实例
+				v := viper.New()
+
+				// 设置文件路径并读取配置
+				v.SetConfigFile(configName)
+				v.SetConfigName(configName)
+				v.AddConfigPath("$GOAPP/conf/")
+				v.SetConfigType("yaml")
+				if err := v.ReadInConfig(); err != nil {
+					return fmt.Errorf("读取配置文件 %s 错误: %v", path, err)
+				}
+
+				AppViperMap[configName] = v
+				// 将此 viper 实例中的配置合并到全局配置中
+				// 这里我们使用 Set() 方法将不同的配置内容按照文件名作为键值存储
+				GlobalViper.MergeConfigMap(v.AllSettings())
+			}
+			return nil
+		})
+	return err
+}
+
+// 返回对应配置的 viper 实例
+//
+// Parameters:
+//   - name: 配置文件名
+//
+// Returns:
+//   - *viper.Viper: 配置实例
+//   - bool: 对应的配置存在返回 ture, 不存在返回false
+func GetConfig(name string) (*viper.Viper, bool) {
+	if AppViperMap[name] != nil {
+		return AppViperMap[name], true
+	}
+	return nil, false
 }

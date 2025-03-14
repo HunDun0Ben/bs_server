@@ -1,4 +1,4 @@
-package main
+package initbutterflyimg
 
 import (
 	"context"
@@ -21,15 +21,7 @@ var segmentations = "segmentations"
 var imgsPath = filepath.Join(basePath, images)
 var segPath = filepath.Join(basePath, segmentations)
 
-func main() {
-	displayImg()
-	fmt.Printf("images path = %s\n", imgsPath)
-	fmt.Printf("segmentations path = %s\n", segPath)
-	// verifyImgsAndSeg()
-	// insertImg()
-}
-
-func displayImg() {
+func DisplayImg() {
 	collection := imongo.FileDatabase().Collection("butterfly_img")
 	bf := new(file.ButterflyFile)
 	bf.Path = "/home/workspace/data/leedsbutterfly/images/0010001.png"
@@ -53,7 +45,7 @@ func displayImg() {
 	window.Close()
 }
 
-func insertImg() {
+func InsertImg() {
 	collection := imongo.FileDatabase().Collection("butterfly_img")
 	err := filepath.WalkDir(imgsPath, func(path string, d fs.DirEntry, err error) error {
 		seg_suf := "_seg0"
@@ -97,7 +89,7 @@ func insertImg() {
 	}
 }
 
-func verifyImgsAndSeg() {
+func VerifyImgsAndSeg() {
 	var count int
 	err := filepath.WalkDir(imgsPath, func(path string, d fs.DirEntry, err error) error {
 		seg_suf := "_seg0"
