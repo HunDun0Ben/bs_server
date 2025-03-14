@@ -11,7 +11,7 @@ func InitRoute(engine *gin.Engine) {
 	{
 		test.GET("/getAllProType", api.GetProType)
 		test.GET("/hello", api.HelloWorld)
-		test.GET("/test")
+		test.GET("/test", api.Test)
 	}
 
 	manage := engine.Group("/manage")

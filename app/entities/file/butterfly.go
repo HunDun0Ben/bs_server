@@ -8,7 +8,13 @@ type ButterflyFile struct {
 }
 
 func NewButterflyFile(fileName, typeName, path string, content, maskContent []byte) *ButterflyFile {
-	return &ButterflyFile{MaskContent: maskContent,
-		FileStoreData: imongo.FileStoreData{FileName: fileName, TypeName: typeName, Path: path, Content: content},
+	return &ButterflyFile{
+		MaskContent: maskContent,
+		FileStoreData: imongo.FileStoreData{
+			FileName: fileName,
+			TypeName: typeName,
+			Path:     path,
+			Content:  content,
+		},
 	}
 }
