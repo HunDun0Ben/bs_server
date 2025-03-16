@@ -1,19 +1,20 @@
 package feature
 
 import (
-	"image/color"
-	"log"
+	"demo/gocv/imgpro/img/utils"
+	"log/slog"
 
 	"gocv.io/x/gocv"
 )
 
-func GetImgSIFT(mat *gocv.Mat) gocv.Mat {
+func DrawImgSIFT(mat *gocv.Mat) *gocv.Mat {
 	if mat.Empty() {
-		log.Printf("该图像为空.")
+		slog.Info("该图像为空.")
 	}
 	sift := gocv.NewSIFT()
+	defer sift.Close()
 	keypoints := sift.Detect(*mat)
-	sift.Close()
-	gocv.DrawKeyPoints(*mat, keypoints, mat, color.RGBA{255, 0, 0, 255}, gocv.DrawDefault)
-	return *mat
+	gocv.DrawKeyPoints(*mat, keypoints, mat,
+		*utils.RandColor(), gocv.DrawRichKeyPoints)
+	return mat
 }

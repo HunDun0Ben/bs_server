@@ -1,4 +1,4 @@
-package imgpro
+package utils
 
 import (
 	"gocv.io/x/gocv"
