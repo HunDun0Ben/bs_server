@@ -7,11 +7,11 @@ import (
 )
 
 func InitRoute(engine *gin.Engine) {
-	test := engine.Group("/test")
+	router := engine.Group("/test")
 	{
-		test.GET("/getAllProType", api.GetProType)
-		test.GET("/hello", api.HelloWorld)
-		test.GET("/test", api.Test)
+		router.GET("/getAllProType", api.GetProType)
+		router.GET("/hello", api.HelloWorld)
+		router.GET("/test", api.Test)
 	}
 
 	manage := engine.Group("/manage")

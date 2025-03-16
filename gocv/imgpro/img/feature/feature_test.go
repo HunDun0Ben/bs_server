@@ -13,7 +13,7 @@ import (
 func Test(t *testing.T) {
 	filename := `/home/workspace/data/leedsbutterfly/images/0010001.png`
 	win := ui.NewProcessingWindow("Erosion Demo")
-	win.LoadImage(filename)
+	win.LoadImageFromPath(filename)
 	win.Process(func(src *gocv.Mat) *gocv.Mat {
 		return feature.DrawImgSIFT(win.GetDstMat())
 	})

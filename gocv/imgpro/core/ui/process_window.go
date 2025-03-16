@@ -38,7 +38,7 @@ func (w *ProcessingWindow) SetProcessor(p core.ProcessorContext) {
 	w.processor = p
 }
 
-func (w *ProcessingWindow) LoadImage(path string) error {
+func (w *ProcessingWindow) LoadImageFromPath(path string) error {
 	src := gocv.IMRead(path, gocv.IMReadColor)
 	if src.Empty() {
 		return fmt.Errorf("failed to load image: %s", path)
@@ -47,6 +47,16 @@ func (w *ProcessingWindow) LoadImage(path string) error {
 	w.dst = utils.NewSomeMat(*w.src)
 	src.CopyTo(w.dst)
 	return nil
+}
+
+// LoadImageFromMat loads an image from a gocv.Mat and initializes the src and dst fields.
+func (w *ProcessingWindow) LoadImageFromMat(img gocv.Mat) {
+	if img.Empty() {
+		return
+	}
+	w.src = &img
+	w.dst = utils.NewSomeMat(*w.src)
+	img.CopyTo(w.dst)
 }
 
 func (w *ProcessingWindow) Display() {

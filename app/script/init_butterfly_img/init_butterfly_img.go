@@ -4,6 +4,7 @@ import (
 	"context"
 	"demo/app/entities/file"
 	"demo/common/data/imongo"
+	"demo/gocv/imgpro/core/ui"
 	"fmt"
 	"io/fs"
 	"log"
@@ -34,15 +35,11 @@ func DisplayImg() {
 		}
 		panic(err)
 	}
-	window := gocv.NewWindow("Hello")
+
+	win := ui.NewProcessingWindow("Hello")
 	img, _ := gocv.IMDecode(bf.Content, gocv.IMReadColor)
-	for {
-		window.IMShow(img)
-		if window.WaitKey(1) >= 0 || window.GetWindowProperty(gocv.WindowPropertyVisible) == 0 {
-			break
-		}
-	}
-	window.Close()
+	win.LoadImageFromMat(img)
+	win.Display()
 }
 
 func InsertImg() {

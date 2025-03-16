@@ -30,7 +30,7 @@ func TestMorphologyOp(t *testing.T) {
 	})
 
 	// 加载图像
-	if err := window.LoadImage(filename); err != nil {
+	if err := window.LoadImageFromPath(filename); err != nil {
 		panic(err)
 	}
 
@@ -56,7 +56,7 @@ func TestBlurWindow(t *testing.T) {
 	})
 
 	// 加载图像
-	if err := window.LoadImage(filename); err != nil {
+	if err := window.LoadImageFromPath(filename); err != nil {
 		panic(err)
 	}
 

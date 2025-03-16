@@ -1,9 +1,10 @@
 package main
 
 import (
-	"demo/app/router"
+	r "demo/app/router"
 	"demo/common/conf"
 	mcli "demo/common/data/imongo"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +20,12 @@ func loadDataBase() {
 }
 
 func startServer() {
-	r := gin.Default()
-	router.InitRoute(r)
-	r.Run() // 监听并在 0.0.0.0:8080 上启动服务
+	router := gin.Default()
+	r.InitRoute(router)
+
+	s := &http.Server{
+		Addr:    ":" + conf.GlobalViper.GetString("server.port"),
+		Handler: router,
+	}
+	s.ListenAndServe()
 }
