@@ -23,7 +23,7 @@ func main() {
 
 func loadInfoFromCSV() []any {
 	filepath := "./蝴蝶信息.xlsx"
-	// headstr := [...]string{"中文名称", "英文名称", "拉丁学名",
+	// headStr := [...]string{"中文名称", "英文名称", "拉丁学名",
 	// 	"特征描述文本", "分布情况文本", "保护级别", "别名"}
 	f, err := excelize.OpenFile(filepath)
 	if err != nil {

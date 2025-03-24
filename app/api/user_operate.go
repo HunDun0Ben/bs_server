@@ -21,7 +21,11 @@ func UploadImg(cxt *gin.Context) {
 	if err != nil {
 		panic("")
 	}
-	imongo.StoreFile("updateImg", imongo.FileStoreData{FileName: header.Filename, Content: fileContent})
+	imongo.StoreFile(
+		cxt,
+		"updateImg",
+		imongo.FileStoreData{FileName: header.Filename, Content: fileContent},
+	)
 	cxt.JSON(http.StatusOK, fmt.Sprintf("'%s' uploaded!", header.Filename))
 }
 
@@ -31,7 +35,7 @@ func GetImgResult(cxt *gin.Context) {
 		cxt.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fileData, err := imongo.GetFile("updateImg", req.ImgId)
+	fileData, err := imongo.GetFile(cxt, "updateImg", req.ImgId)
 	if fileData != nil {
 		cxt.JSON(http.StatusOK, gin.H{"GetImgResultReq": req})
 	} else {

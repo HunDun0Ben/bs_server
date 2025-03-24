@@ -12,6 +12,7 @@ import (
 
 var GlobalViper *viper.Viper = viper.New()
 var AppViperMap map[string]*viper.Viper = make(map[string]*viper.Viper)
+
 var fs afero.Fs = afero.NewOsFs()
 
 // 初始化全局配置
@@ -25,7 +26,7 @@ func loadAllConfig() error {
 	var app string
 	app, ok := os.LookupEnv("GOAPP")
 	if !ok {
-		app = ""
+		app = "./"
 	}
 	if err := loadConfigFiles(app); err != nil {
 		return err
@@ -48,16 +49,15 @@ func loadConfigFiles(dir string) error {
 				configName := strings.Split(info.Name(), ".")[0]
 				// 创建一个新的 viper 实例
 				v := viper.New()
-
 				// 设置文件路径并读取配置
 				v.SetConfigFile(configName)
 				v.SetConfigName(configName)
 				v.AddConfigPath("$GOAPP/conf/")
+				v.AddConfigPath("./conf/")
 				v.SetConfigType("yaml")
 				if err := v.ReadInConfig(); err != nil {
 					return fmt.Errorf("读取配置文件 %s 错误: %v", path, err)
 				}
-
 				AppViperMap[configName] = v
 				// 将此 viper 实例中的配置合并到全局配置中
 				// 这里我们使用 Set() 方法将不同的配置内容按照文件名作为键值存储

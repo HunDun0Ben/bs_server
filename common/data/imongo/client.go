@@ -2,6 +2,7 @@ package imongo
 
 import (
 	"context"
+	"demo/common/conf"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -10,12 +11,12 @@ import (
 var Client *mongo.Client
 
 func Init() {
-	uri := `mongodb://localhost:27017`
-	client, err := mongo.Connect(context.TODO(),
-		options.
-			Client().
-			// SetLoggerOptions(options.Logger().SetComponentLevel(options.LogComponentCommand, options.LogLevelDebug)).
-			ApplyURI(uri))
+	uri := conf.GlobalViper.GetString("mongodb.uri")
+	cliOptions := options.
+		Client().
+		// SetLoggerOptions(options.Logger().SetComponentLevel(options.LogComponentCommand, options.LogLevelDebug)).
+		ApplyURI(uri)
+	client, err := mongo.Connect(context.TODO(), cliOptions)
 	Client = client
 	if err != nil {
 		panic(err)
