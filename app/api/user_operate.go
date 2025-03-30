@@ -1,12 +1,12 @@
 package api
 
 import (
-	"demo/common/data/imongo"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 
+	"github.com/HunDun0Ben/bs_server/common/data/imongo"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +35,9 @@ func GetImgResult(cxt *gin.Context) {
 		cxt.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fileData, err := imongo.GetFile(cxt, "updateImg", req.ImgId)
+
+	fileData, err := imongo.GetFile(cxt, "updateImg", req.ImgID)
+
 	if fileData != nil {
 		cxt.JSON(http.StatusOK, gin.H{"GetImgResultReq": req})
 	} else {
@@ -44,5 +46,4 @@ func GetImgResult(cxt *gin.Context) {
 }
 
 func InsectInfo(cxt *gin.Context) {
-
 }

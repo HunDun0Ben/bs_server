@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"demo/gocv/imgpro/core"
-	"demo/gocv/imgpro/img/utils"
 	"fmt"
 
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/utils"
 	"gocv.io/x/gocv"
 )
 

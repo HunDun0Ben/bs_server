@@ -1,9 +1,9 @@
 package service
 
 import (
-	"demo/gocv/imgpro/constant"
 	"image"
 
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/constant"
 	"gocv.io/x/gocv"
 )
 

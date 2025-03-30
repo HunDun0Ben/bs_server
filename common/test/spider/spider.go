@@ -1,6 +1,7 @@
 package spider
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -10,17 +11,20 @@ import (
 	"golang.org/x/net/html"
 )
 
-func HttpParse() {
+func HTTPParse() {
 	uri := "https://www.hudiemi.com/hudiedaquan/hudie_238.html"
 	// 创建一个自定义的 http.Client
-	tr := &http.Transport{
+	client := &http.Client{Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}}
+	// 发送 GET 请求
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, uri, http.NoBody)
+	if err != nil {
+		log.Println(err)
+		return
 	}
 
-	client := &http.Client{Transport: tr}
-
-	// 发送 GET 请求
-	resp, err := client.Get(uri)
+	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
 		return
@@ -59,7 +63,7 @@ var AllSpaceReplacer *strings.Replacer
 
 func init() {
 	commonSpaceChar := []string{" ", "\t", "\n", "\r", "\v", "\f"}
-	var replacePairs = make([]string, 0)
+	replacePairs := make([]string, 0)
 	for _, v := range commonSpaceChar {
 		replacePairs = append(replacePairs, v)
 		replacePairs = append(replacePairs, "")

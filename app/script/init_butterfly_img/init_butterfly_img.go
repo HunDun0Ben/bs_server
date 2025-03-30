@@ -2,9 +2,6 @@ package initbutterflyimg
 
 import (
 	"context"
-	"demo/app/entities/file"
-	"demo/common/data/imongo"
-	"demo/gocv/imgpro/core/ui"
 	"fmt"
 	"io/fs"
 	"log"
@@ -12,15 +9,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/HunDun0Ben/bs_server/app/entities/file"
+	"github.com/HunDun0Ben/bs_server/common/data/imongo"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ui"
 	"go.mongodb.org/mongo-driver/mongo"
 	"gocv.io/x/gocv"
 )
 
-var basePath = `/home/workspace/data/leedsbutterfly`
-var images = "images"
-var segmentations = "segmentations"
-var imgsPath = filepath.Join(basePath, images)
-var segPath = filepath.Join(basePath, segmentations)
+var (
+	basePath      = `/home/workspace/data/leedsbutterfly`
+	images        = "images"
+	segmentations = "segmentations"
+	imgsPath      = filepath.Join(basePath, images)
+	segPath       = filepath.Join(basePath, segmentations)
+)
 
 func DisplayImg() {
 	collection := imongo.FileDatabase().Collection("butterfly_img")

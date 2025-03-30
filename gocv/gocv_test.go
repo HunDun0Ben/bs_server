@@ -1,9 +1,10 @@
 package gocv_test
 
 import (
-	"demo/gocv/imgpro/core/ops"
-	"demo/gocv/imgpro/core/ui"
 	"testing"
+
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ops"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ui"
 )
 
 var filename = `/home/workspace/data/leedsbutterfly/images/0010001.png`

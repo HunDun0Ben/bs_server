@@ -1,6 +1,6 @@
 package file
 
-import "demo/common/data/imongo"
+import "github.com/HunDun0Ben/bs_server/common/data/imongo"
 
 type ButterflyFile struct {
 	imongo.FileStoreData `bson:"inline"`

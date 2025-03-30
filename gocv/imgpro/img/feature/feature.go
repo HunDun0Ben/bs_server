@@ -1,9 +1,9 @@
 package feature
 
 import (
-	"demo/gocv/imgpro/img/utils"
 	"log/slog"
 
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/utils"
 	"gocv.io/x/gocv"
 )
 

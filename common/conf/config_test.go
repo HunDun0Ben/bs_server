@@ -1,10 +1,11 @@
 package conf_test
 
 import (
-	"demo/common/conf"
 	"encoding/json"
 	"log/slog"
 	"testing"
+
+	"github.com/HunDun0Ben/bs_server/common/conf"
 )
 
 func TestLoadAllConfig(t *testing.T) {

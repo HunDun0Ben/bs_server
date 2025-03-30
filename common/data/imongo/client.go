@@ -2,8 +2,8 @@ package imongo
 
 import (
 	"context"
-	"demo/common/conf"
 
+	"github.com/HunDun0Ben/bs_server/common/conf"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	r "demo/app/router"
-	"demo/common/conf"
-	mcli "demo/common/data/imongo"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,6 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	r "github.com/HunDun0Ben/bs_server/app/router"
+	"github.com/HunDun0Ben/bs_server/common/conf"
+	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
 	"github.com/gin-gonic/gin"
 )
 
