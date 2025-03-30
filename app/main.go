@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	r "demo/app/router"
-	"demo/common/conf"
-	mcli "demo/common/data/imongo"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,11 +11,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	r "github.com/HunDun0Ben/bs_server/app/router"
+	"github.com/HunDun0Ben/bs_server/common/conf"
+	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
 )
 
 func main() {
-	// 加载配置文件
-	conf.InitConfig()
 	// 连接数据库
 	loadDataBase()
 	// 启动服务器
@@ -26,7 +25,7 @@ func main() {
 }
 
 func loadDataBase() {
-	mcli.Init()
+	mcli.Client()
 }
 
 func startServer() {
@@ -43,7 +42,7 @@ func startServer() {
 			slog.Error("Failed to start server", "error", err)
 		}
 	}()
-	slog.Info("Server started", "address", serverAddr)
+	slog.Info("Server started.", "address", server.Addr)
 
 	// 6. 优雅关闭服务器
 	quit := make(chan os.Signal, 1)

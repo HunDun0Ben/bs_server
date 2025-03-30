@@ -1,18 +1,22 @@
 package feature_test
 
 import (
-	"demo/gocv/imgpro/core/ui"
-	"demo/gocv/imgpro/img/feature"
-	"demo/gocv/imgpro/img/utils"
 	"image"
+	"os"
 	"testing"
 
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ui"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/feature"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/utils"
 	"gocv.io/x/gocv"
 )
 
 func Test(t *testing.T) {
 	filename := `/home/workspace/data/leedsbutterfly/images/0010001.png`
 	win := ui.NewProcessingWindow("Erosion Demo")
+	if err := win.LoadImageFromPath(filename); err != nil {
+		os.Exit(1)
+	}
 	win.LoadImageFromPath(filename)
 	win.Process(func(src *gocv.Mat) *gocv.Mat {
 		return feature.DrawImgSIFT(win.GetDstMat())
@@ -52,8 +56,8 @@ func TestDes(t *testing.T) {
 	dm := matcher.KnnMatch(des1, des2, 2)
 
 	// 复制体?
-	copy := gocv.NewMat()
-	concatImg.CopyTo(&copy)
+	imgCopy := gocv.NewMat()
+	concatImg.CopyTo(&imgCopy)
 
 	// 筛选出优秀匹配
 	var goodMatches []gocv.DMatch
@@ -68,14 +72,14 @@ func TestDes(t *testing.T) {
 		clr := *utils.RandColor()
 		pt1 := image.Point{int(kp1[match.QueryIdx].X), int(kp1[match.QueryIdx].Y)}
 		pt2 := image.Point{int(kp2[match.TrainIdx].X) + mat1.Cols(), int(kp2[match.TrainIdx].Y)}
-		gocv.Circle(&copy, pt1, 5, clr, 2)
-		gocv.Circle(&copy, pt2, 5, clr, 2)
-		gocv.Line(&copy, pt1, pt2, clr, 2)
+		gocv.Circle(&imgCopy, pt1, 5, clr, 2)
+		gocv.Circle(&imgCopy, pt2, 5, clr, 2)
+		gocv.Line(&imgCopy, pt1, pt2, clr, 2)
 	}
 
 	window := gocv.NewWindow("123")
 	for {
-		window.IMShow(copy)
+		window.IMShow(imgCopy)
 		if window.WaitKey(100) >= 0 || window.GetWindowProperty(gocv.WindowPropertyVisible) == 0 {
 			break
 		}

@@ -1,13 +1,14 @@
 package spider_test
 
 import (
-	"demo/common/test/spider"
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/HunDun0Ben/bs_server/common/test/spider"
 )
 
 func Test(t *testing.T) {
 	fmt.Printf("aa = %s\n", strings.TrimSpace("\n"))
-	spider.HttpParse()
+	spider.HTTPParse()
 }

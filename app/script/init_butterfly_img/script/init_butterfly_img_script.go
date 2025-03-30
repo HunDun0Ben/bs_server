@@ -1,9 +1,10 @@
 package main
 
 import (
-	initbutterflyimg "demo/app/script/init_butterfly_img"
 	"log/slog"
 	"os"
+
+	initbutterflyimg "github.com/HunDun0Ben/bs_server/app/script/init_butterfly_img"
 )
 
 func main() {

@@ -2,23 +2,22 @@ package main
 
 import (
 	"context"
-	"demo/app/entities/insect"
-	mcli "demo/common/data/imongo"
-	"log"
+	"log/slog"
 
 	"github.com/xuri/excelize/v2"
 	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/HunDun0Ben/bs_server/app/entities/insect"
+	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
 )
 
 func main() {
-	mcli.Init()
-	col := mcli.Client.Database("bs_server_db").Collection("butterfly_info")
+	col := mcli.Database("bs_server_db").Collection("butterfly_info")
 	// list := loadInfoFromCSV()
 	// col.InsertMany(context.Background(), list)
-
 	var insect insect.Insect
 	col.FindOne(context.Background(), bson.D{}).Decode(&insect)
-	log.Println(insect)
+	slog.Info("", "insect", insect)
 }
 
 func loadInfoFromCSV() []any {
@@ -31,7 +30,7 @@ func loadInfoFromCSV() []any {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Print(err)
+			slog.Error("", "err", err)
 		}
 	}()
 
@@ -52,6 +51,6 @@ func loadInfoFromCSV() []any {
 		}
 		list = append(list, insect)
 	}
-	log.Println(list)
+	slog.Info("list", "list", list)
 	return list
 }

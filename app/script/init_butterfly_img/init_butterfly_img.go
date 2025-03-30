@@ -2,9 +2,6 @@ package initbutterflyimg
 
 import (
 	"context"
-	"demo/app/entities/file"
-	"demo/common/data/imongo"
-	"demo/gocv/imgpro/core/ui"
 	"fmt"
 	"io/fs"
 	"log"
@@ -14,16 +11,22 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"gocv.io/x/gocv"
+
+	"github.com/HunDun0Ben/bs_server/app/entities/file"
+	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ui"
 )
 
-var basePath = `/home/workspace/data/leedsbutterfly`
-var images = "images"
-var segmentations = "segmentations"
-var imgsPath = filepath.Join(basePath, images)
-var segPath = filepath.Join(basePath, segmentations)
+var (
+	basePath      = `/home/workspace/data/leedsbutterfly`
+	images        = "images"
+	segmentations = "segmentations"
+	imgsPath      = filepath.Join(basePath, images)
+	segPath       = filepath.Join(basePath, segmentations)
+)
 
 func DisplayImg() {
-	collection := imongo.FileDatabase().Collection("butterfly_img")
+	collection := mcli.FileDatabase().Collection("butterfly_img")
 	bf := new(file.ButterflyFile)
 	bf.Path = "/home/workspace/data/leedsbutterfly/images/0010001.png"
 
@@ -43,9 +46,9 @@ func DisplayImg() {
 }
 
 func InsertImg() {
-	collection := imongo.FileDatabase().Collection("butterfly_img")
+	collection := mcli.FileDatabase().Collection("butterfly_img")
 	err := filepath.WalkDir(imgsPath, func(path string, d fs.DirEntry, err error) error {
-		seg_suf := "_seg0"
+		segSuf := "_seg0"
 		if err != nil {
 			fmt.Println(err)
 			return nil
@@ -58,7 +61,7 @@ func InsertImg() {
 			}
 			ext := filepath.Ext(info.Name())
 			nameWithoutExt := strings.TrimSuffix(info.Name(), ext)
-			segFileName := nameWithoutExt + seg_suf + ext
+			segFileName := nameWithoutExt + segSuf + ext
 			segPath := filepath.Join(segPath, segFileName)
 			content, err := os.ReadFile(path)
 			if err != nil {
@@ -88,8 +91,8 @@ func InsertImg() {
 
 func VerifyImgsAndSeg() {
 	var count int
-	err := filepath.WalkDir(imgsPath, func(path string, d fs.DirEntry, err error) error {
-		seg_suf := "_seg0"
+	err := filepath.WalkDir(imgsPath, func(_ string, d fs.DirEntry, err error) error {
+		segSuf := "_seg0"
 		if err != nil {
 			fmt.Println(err)
 			return nil
@@ -102,7 +105,7 @@ func VerifyImgsAndSeg() {
 			}
 			ext := filepath.Ext(info.Name())
 			nameWithoutExt := strings.TrimSuffix(info.Name(), ext)
-			segFileName := nameWithoutExt + seg_suf + ext
+			segFileName := nameWithoutExt + segSuf + ext
 			segPath := filepath.Join(segPath, segFileName)
 			_, err = os.Stat(segPath)
 			if os.IsNotExist(err) {

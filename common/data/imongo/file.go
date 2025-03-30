@@ -3,7 +3,7 @@ package imongo
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type FileStoreData struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty"`
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
 	FileName string             `bson:"file_name,omitempty"`
 	TypeName string             `bson:"type_name,omitempty"`
 	Path     string             `bson:"path,omitempty"`

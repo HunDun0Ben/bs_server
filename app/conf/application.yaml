@@ -3,3 +3,5 @@ server:
   port: 8080
 log:
   level: "debug"
+jwt:
+  secret: "your-secret-key-here"  # 请在生产环境中使用更安全的密钥

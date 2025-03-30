@@ -1,18 +1,19 @@
 package gexcel_test
 
 import (
-	"demo/app/entities/insect"
-	"demo/common/util/gexcel"
 	"testing"
+
+	"github.com/HunDun0Ben/bs_server/app/entities/insect"
+	"github.com/HunDun0Ben/bs_server/common/util/gexcel"
 )
 
 func Test(t *testing.T) {
 	insects := []insect.Insect{
-		{Id: "1", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
-		{Id: "2", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
-		{Id: "3", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
-		{Id: "4", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
-		{Id: "5", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
+		{ID: "1", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
+		{ID: "2", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
+		{ID: "3", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
+		{ID: "4", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
+		{ID: "5", ChineseName: "黑脉金斑蝶", LatinName: "Danaus plexippus", EnglishName: "Monarch butterfly "},
 	}
 	gexcel.WriteData(insects)
 }

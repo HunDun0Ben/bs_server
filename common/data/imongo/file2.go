@@ -15,7 +15,7 @@ func StoreFile(cxt context.Context, colName string, file FileStoreData) (bool, e
 	return true, nil
 }
 
-func GetFile(cxt context.Context, colName string, id string) (*FileStoreData, error) {
+func GetFile(cxt context.Context, colName, id string) (*FileStoreData, error) {
 	dbCli := FileDatabase()
 	var res FileStoreData
 	err := dbCli.Collection(colName).

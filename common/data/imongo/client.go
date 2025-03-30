@@ -2,35 +2,61 @@ package imongo
 
 import (
 	"context"
-	"demo/common/conf"
+	"fmt"
+	"sync"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/HunDun0Ben/bs_server/common/conf"
 )
 
-var Client *mongo.Client
-
-func Init() {
-	uri := conf.GlobalViper.GetString("mongodb.uri")
-	cliOptions := options.
-		Client().
-		// SetLoggerOptions(options.Logger().SetComponentLevel(options.LogComponentCommand, options.LogLevelDebug)).
-		ApplyURI(uri)
-	client, err := mongo.Connect(context.TODO(), cliOptions)
-	Client = client
-	if err != nil {
-		panic(err)
-	}
+type MongoClient struct {
+	client *mongo.Client
+	once   sync.Once
 }
 
-func Default() *mongo.Client {
-	if Client == nil {
-		Init()
+var (
+	instance *MongoClient
+	mu       sync.Mutex
+)
+
+func Client() *MongoClient {
+	if instance == nil {
+		mu.Lock()
+		defer mu.Unlock()
+		if instance == nil {
+			instance = &MongoClient{}
+			instance.Init()
+		}
 	}
-	return Client
+	return instance
+}
+
+func (m *MongoClient) Init() error {
+	var err error
+	m.once.Do(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		uri := conf.GlobalViper.GetString("mongodb.uri")
+		if uri == "" {
+			err = fmt.Errorf("MongoDB URI not configured")
+			return
+		}
+		cliOptions := options.Client().
+			SetLoggerOptions(options.Logger().
+				SetComponentLevel(options.LogComponentCommand, options.LogLevelDebug)).
+			ApplyURI(uri)
+		m.client, err = mongo.Connect(ctx, cliOptions)
+	})
+	return err
+}
+
+func Database(database string) *mongo.Database {
+	return Client().client.Database(database)
 }
 
 func FileDatabase() *mongo.Database {
-	Default()
-	return Client.Database("file_db")
+	return Client().client.Database("file_db")
 }

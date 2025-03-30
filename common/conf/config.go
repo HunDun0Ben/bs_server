@@ -10,13 +10,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-var GlobalViper *viper.Viper = viper.New()
-var AppViperMap map[string]*viper.Viper = make(map[string]*viper.Viper)
+var (
+	GlobalViper *viper.Viper            = viper.New()
+	AppViperMap map[string]*viper.Viper = make(map[string]*viper.Viper)
+)
 
 var fs afero.Fs = afero.NewOsFs()
 
-// 初始化全局配置
-func InitConfig() {
+// 初始化全局配置.
+func init() {
 	loadAllConfig()
 	// 也可以启用环境变量支持
 	GlobalViper.AutomaticEnv()
@@ -34,8 +36,8 @@ func loadAllConfig() error {
 	return nil
 }
 
-// 加载目录下的所有 YAML 文件到对应的 viper 中
-// 并且聚合生成全局的 GLobalViper
+// 加载目录下的所有 YAML 文件到对应的 viper 中.
+// 并且聚合生成全局的 GlobalViper.
 func loadConfigFiles(dir string) error {
 	// 遍历目录下的所有文件
 	err := afero.Walk(fs, dir,

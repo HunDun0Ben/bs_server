@@ -17,7 +17,7 @@ type Classification struct {
 }
 
 type Insect struct {
-	Id                 string          `xlsx:"主键id" bson:"_id"`
+	ID                 string          `xlsx:"主键id" bson:"_id"`
 	ChineseName        string          `xlsx:"中文名称" bson:"chinese_name,omitempty"`
 	EnglishName        string          `xlsx:"英文名称" bson:"english_name,omitempty"`
 	LatinName          string          `xlsx:"拉丁学名" bson:"latin_name,omitempty"`
