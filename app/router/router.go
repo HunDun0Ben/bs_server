@@ -33,7 +33,7 @@ func InitRoute(engine *gin.Engine) {
 
 	// 管理路由
 	manage := web.Group("/manage")
-	manage.GET("/initImgDB")
+	// manage.GET("/initImgDB")
 	manage.GET("/initInsect", api.InitInsect)
 	manage.GET("/initClassification", api.InitClassification)
 
@@ -42,4 +42,5 @@ func InitRoute(engine *gin.Engine) {
 	user.POST("/uploadImg", api.UploadImg)
 	user.GET("/getImgResult", api.GetImgResult)
 	user.GET("/insect", api.InsectInfo)
+	user.GET("/butterfly_info", api.ButterflyInfo)
 }

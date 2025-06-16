@@ -17,12 +17,12 @@ type Classification struct {
 }
 
 type Insect struct {
-	ID                 string          `xlsx:"主键id" bson:"_id"`
-	ChineseName        string          `xlsx:"中文名称" bson:"chinese_name,omitempty"`
-	EnglishName        string          `xlsx:"英文名称" bson:"english_name,omitempty"`
-	LatinName          string          `xlsx:"拉丁学名" bson:"latin_name,omitempty"`
-	FeatureDescription string          `xlsx:"特征描述文本" bson:"feature_description,omitempty"`
-	Distribution       string          `xlsx:"分布情况文本" bson:"distribution,omitempty"`
-	ProtectionLevel    string          `xlsx:"保护级别文本" bson:"protection_level,omitempty"`
-	Classification     *Classification `xlsx:"分类类型" bson:"classification,omitempty"`
+	ID                 string          `xlsx:"主键id" bson:"_id" json:"id"`
+	ChineseName        string          `xlsx:"中文名称" bson:"chinese_name,omitempty" json:"chinese_name,omitempty"`
+	EnglishName        string          `xlsx:"英文名称" bson:"english_name,omitempty" json:"english_name,omitempty"`
+	LatinName          string          `xlsx:"拉丁学名" bson:"latin_name,omitempty" json:"latin_name,omitempty"`
+	FeatureDescription string          `xlsx:"特征描述文本" bson:"feature_description,omitempty" json:"feature_description,omitempty"`
+	Distribution       string          `xlsx:"分布情况文本" bson:"distribution,omitempty" json:"distribution,omitempty"`
+	ProtectionLevel    string          `xlsx:"保护级别文本" bson:"protection_level,omitempty" json:"protection_level,omitempty"`
+	Classification     *Classification `xlsx:"分类类型" bson:"classification,omitempty" json:"classification,omitempty"`
 }
