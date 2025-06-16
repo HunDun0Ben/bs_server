@@ -5,9 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HunDun0Ben/bs_server/common/conf"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/HunDun0Ben/bs_server/app/entities/user"
+	"github.com/HunDun0Ben/bs_server/common/conf"
 )
 
 type Claims struct {
@@ -16,16 +18,16 @@ type Claims struct {
 }
 
 // GenerateToken 生成 JWT token.
-func GenerateToken(username string) (string, error) {
+func GenerateToken(user user.User) (string, error) {
 	claims := Claims{
-		username,
+		user.Username,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.GlobalViper.GetDuration("jwt.expiration"))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			// 令牌启用时间
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(conf.GlobalViper.GetString("jwt.secret")))
 }

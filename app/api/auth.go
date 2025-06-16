@@ -3,8 +3,10 @@ package api
 import (
 	"net/http"
 
-	"github.com/HunDun0Ben/bs_server/app/middleware"
 	"github.com/gin-gonic/gin"
+
+	"github.com/HunDun0Ben/bs_server/app/middleware"
+	"github.com/HunDun0Ben/bs_server/app/service/user_service"
 )
 
 type LoginRequest struct {
@@ -19,18 +21,23 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// 这里应该添加实际的用户验证逻辑
-	// 为了演示，我们只做简单的验证
-	if req.Username == "admin" && req.Password == "password" {
-		token, err := middleware.GenerateToken(req.Username)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "生成token失败"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"token": token,
-		})
-	} else {
+	user, err := user_service.NewUserService().FindByLogin(c, req.Username, req.Password)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+		return
 	}
+	if user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	token, err := middleware.GenerateToken(*user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成token失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
+		"token":  token,
+	})
 }

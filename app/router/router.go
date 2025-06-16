@@ -5,6 +5,7 @@ import (
 
 	"github.com/HunDun0Ben/bs_server/app/api"
 	"github.com/HunDun0Ben/bs_server/app/middleware"
+	"github.com/HunDun0Ben/bs_server/common/conf"
 )
 
 func InitRoute(engine *gin.Engine) {
@@ -16,8 +17,10 @@ func InitRoute(engine *gin.Engine) {
 
 	// 需要认证的路由
 	web := engine.Group("/")
-	web.Use(middleware.JWTAuth(),
-		middleware.WebErrorHandler())
+
+	if conf.GlobalViper.GetBool("jwt.enable") {
+		web.Use(middleware.JWTAuth())
+	}
 
 	// 测试路由
 	test := web.Group("/test")
