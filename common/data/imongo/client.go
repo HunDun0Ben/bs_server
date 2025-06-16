@@ -14,7 +14,8 @@ import (
 
 type MongoClient struct {
 	client *mongo.Client
-	once   sync.Once
+	// 保证只初始化一次
+	once sync.Once
 }
 
 var (
@@ -57,6 +58,10 @@ func Database(database string) *mongo.Database {
 	return Client().client.Database(database)
 }
 
+func BizDataBase() *mongo.Database {
+	return Client().client.Database(conf.GlobalViper.GetString("mongodb.biz_db"))
+}
+
 func FileDatabase() *mongo.Database {
-	return Client().client.Database("file_db")
+	return Client().client.Database(conf.GlobalViper.GetString("mongodb.file_db"))
 }
