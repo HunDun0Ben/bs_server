@@ -1,3 +1,4 @@
 mongodb:
   uri: mongodb://localhost:27017
-  name:
+  biz_db: bs_server_db 
+  file_db: file_db

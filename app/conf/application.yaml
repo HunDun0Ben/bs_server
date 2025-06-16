@@ -4,4 +4,6 @@ server:
 log:
   level: "debug"
 jwt:
-  secret: "your-secret-key-here"  # 请在生产环境中使用更安全的密钥
+  enable: true
+  secret: XnlDHd7CKmtU1oCVIbHLO4egNxbnMthLHqEchsk4RwnxPxGX80o+f0CwvM1EW0BR3DFQT/PU+xtF3qs6xFM68A==  # 请在生产环境中使用更安全的密钥
+  expire: 3600s  # Token过期时间，单位为秒

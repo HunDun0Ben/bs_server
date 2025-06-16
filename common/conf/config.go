@@ -19,21 +19,20 @@ var fs afero.Fs = afero.NewOsFs()
 
 // 初始化全局配置.
 func init() {
-	loadAllConfig()
-	// 也可以启用环境变量支持
+	// 启用环境变量支持覆盖配置文件
 	GlobalViper.AutomaticEnv()
+	loadAllConfig()
 }
 
-func loadAllConfig() error {
+func loadAllConfig() {
 	var app string
 	app, ok := os.LookupEnv("GOAPP")
 	if !ok {
 		app = "./"
 	}
 	if err := loadConfigFiles(app); err != nil {
-		return err
+		panic(fmt.Errorf("加载配置文件失败: %v", err))
 	}
-	return nil
 }
 
 // 加载目录下的所有 YAML 文件到对应的 viper 中.
@@ -49,13 +48,14 @@ func loadConfigFiles(dir string) error {
 			if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" {
 				// 获取文件名作为 viper 的命名空间
 				configName := strings.Split(info.Name(), ".")[0]
-				// 创建一个新的 viper 实例
+				// 根据每一个 yaml 文件, 创建一个对应的 viper 实例
 				v := viper.New()
 				// 设置文件路径并读取配置
 				v.SetConfigFile(configName)
 				v.SetConfigName(configName)
-				v.AddConfigPath("$GOAPP/conf/")
-				v.AddConfigPath("./conf/")
+				// 默认加载 conf 目录下的配置文件
+				v.AddConfigPath(filepath.Join(dir, "conf"))
+				v.AddConfigPath(dir)
 				v.SetConfigType("yaml")
 				if err := v.ReadInConfig(); err != nil {
 					return fmt.Errorf("读取配置文件 %s 错误: %v", path, err)
