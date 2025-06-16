@@ -14,6 +14,7 @@ import (
 
 	r "github.com/HunDun0Ben/bs_server/app/router"
 	"github.com/HunDun0Ben/bs_server/common/conf"
+
 	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
 )
 
@@ -37,14 +38,16 @@ func startServer() {
 		Addr:    serverAddr,
 		Handler: router,
 	}
+
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("Failed to start server", "error", err)
+			panic("Failed to start server: " + err.Error())
+		} else {
+			slog.Info("Server started.", "address", server.Addr)
 		}
 	}()
-	slog.Info("Server started.", "address", server.Addr)
 
-	// 6. 优雅关闭服务器
+	// 优雅关闭服务器
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	// 阻塞等待接收系统信号
