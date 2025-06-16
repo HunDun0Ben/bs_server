@@ -1,14 +1,19 @@
 package feature_test
 
 import (
+	"context"
 	"image"
 	"os"
 	"testing"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"gocv.io/x/gocv"
+
+	"github.com/HunDun0Ben/bs_server/app/entities/file"
+	"github.com/HunDun0Ben/bs_server/common/data/imongo"
 	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ui"
 	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/feature"
-	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/utils"
-	"gocv.io/x/gocv"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/imgutils"
 )
 
 func Test(t *testing.T) {
@@ -69,7 +74,7 @@ func TestDes(t *testing.T) {
 
 	// 绘制匹配的特征点
 	for _, match := range goodMatches {
-		clr := *utils.RandColor()
+		clr := *imgutils.RandColor()
 		pt1 := image.Point{int(kp1[match.QueryIdx].X), int(kp1[match.QueryIdx].Y)}
 		pt2 := image.Point{int(kp2[match.TrainIdx].X) + mat1.Cols(), int(kp2[match.TrainIdx].Y)}
 		gocv.Circle(&imgCopy, pt1, 5, clr, 2)
@@ -86,7 +91,7 @@ func TestDes(t *testing.T) {
 	}
 
 	dst := gocv.NewMat()
-	clr := *utils.RandColor()
+	clr := *imgutils.RandColor()
 	gocv.DrawMatches(mat1, kp1, mat2, kp2, goodMatches, &dst,
 		clr, clr, nil, gocv.NormconvFilter)
 	for {
@@ -96,4 +101,16 @@ func TestDes(t *testing.T) {
 		}
 	}
 	window.Close()
+}
+
+func TestLoadMaskImg(t *testing.T) {
+	var fileInfo file.ButterflyFile
+	err := imongo.FileDatabase().Collection("butterfly_img").FindOne(context.Background(), bson.D{}).Decode(&fileInfo)
+	if err != nil {
+		t.Fatalf("Failed to find file: %v", err)
+		return
+	}
+	win := ui.NewProcessingWindow("after mask of img demo")
+	win.LoadImageFromMat(*feature.DrawImgSIFT(imgutils.GetMaskImg(fileInfo)))
+	win.Display()
 }

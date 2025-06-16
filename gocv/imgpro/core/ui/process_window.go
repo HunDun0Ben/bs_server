@@ -3,9 +3,10 @@ package ui
 import (
 	"fmt"
 
-	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core"
-	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/utils"
 	"gocv.io/x/gocv"
+
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core"
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/imgutils"
 )
 
 type ProcessingWindow struct {
@@ -44,7 +45,7 @@ func (w *ProcessingWindow) LoadImageFromPath(path string) error {
 		return fmt.Errorf("failed to load image: %s", path)
 	}
 	w.src = &src
-	w.dst = utils.NewSomeMat(*w.src)
+	w.dst = imgutils.NewSomeMat(*w.src)
 	src.CopyTo(w.dst)
 	return nil
 }
@@ -55,7 +56,7 @@ func (w *ProcessingWindow) LoadImageFromMat(img gocv.Mat) {
 		return
 	}
 	w.src = &img
-	w.dst = utils.NewSomeMat(*w.src)
+	w.dst = imgutils.NewSomeMat(*w.src)
 	img.CopyTo(w.dst)
 }
 

@@ -3,8 +3,9 @@ package feature
 import (
 	"log/slog"
 
-	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/utils"
 	"gocv.io/x/gocv"
+
+	"github.com/HunDun0Ben/bs_server/gocv/imgpro/img/imgutils"
 )
 
 func DrawImgSIFT(mat *gocv.Mat) *gocv.Mat {
@@ -15,6 +16,6 @@ func DrawImgSIFT(mat *gocv.Mat) *gocv.Mat {
 	defer sift.Close()
 	keypoints := sift.Detect(*mat)
 	gocv.DrawKeyPoints(*mat, keypoints, mat,
-		*utils.RandColor(), gocv.DrawRichKeyPoints)
+		*imgutils.RandColor(), gocv.DrawRichKeyPoints)
 	return mat
 }
