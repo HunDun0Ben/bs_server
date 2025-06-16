@@ -3,13 +3,13 @@ module github.com/HunDun0Ben/bs_server
 go 1.23.6
 
 require (
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.10.0 // Web 框架
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/spf13/afero v1.11.0
-	github.com/spf13/viper v1.19.0
-	github.com/xuri/excelize/v2 v2.9.0
+	github.com/spf13/afero v1.11.0 // 文件系统操作
+	github.com/spf13/viper v1.19.0 // 配置文件操作
+	github.com/xuri/excelize/v2 v2.9.0 // excel 操作
 	go.mongodb.org/mongo-driver v1.17.3
-	gocv.io/x/gocv v0.40.0
+	gocv.io/x/gocv v0.40.0 // opencv
 
 )
 

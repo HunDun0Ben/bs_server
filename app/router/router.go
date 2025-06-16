@@ -9,38 +9,31 @@ import (
 )
 
 func InitRoute(engine *gin.Engine) {
-	// Global middleware - applies to all routes.
-
-	// 公开路由
-	public := engine.Group("/")
-	public.POST("/login", api.Login)
-
-	// 需要认证的路由
-	web := engine.Group("/")
-
-	if conf.GlobalViper.GetBool("jwt.enable") {
-		web.Use(middleware.JWTAuth())
+	{
+		// 公开路由
+		public := engine.Group("/")
+		public.POST("/login", api.Login)
+		// 测试一些内容
+		otherTest := engine.Group("/test")
+		otherTest.GET("/getAllProType", api.GetProType)
 	}
 
-	// 测试路由
-	test := web.Group("/test")
-	// test.GET("/getAllProType", api.GetProType)
-	test.GET("/hello", api.HelloWorld)
-	test.GET("/test", api.Test)
-
-	abb := engine.Group("/test")
-	abb.GET("/getAllProType", api.GetProType)
-
-	// 管理路由
-	manage := web.Group("/manage")
-	// manage.GET("/initImgDB")
-	manage.GET("/initInsect", api.InitInsect)
-	manage.GET("/initClassification", api.InitClassification)
-
-	// 用户路由
-	user := web.Group("/user")
-	user.POST("/uploadImg", api.UploadImg)
-	user.GET("/getImgResult", api.GetImgResult)
-	user.GET("/insect", api.InsectInfo)
-	user.GET("/butterfly_info", api.ButterflyInfo)
+	// jwt 认证路由组
+	auth := engine.Group("/")
+	if conf.GlobalViper.GetBool("jwt.enable") {
+		auth.Use(middleware.JWTAuth())
+	}
+	// 以下的路由都来自 auth 组, 故需要通过 JWT 认证
+	{ // 管理路由
+		manage := auth.Group("/manage")
+		manage.GET("/initInsect", api.InitInsect)
+		manage.GET("/initClassification", api.InitClassification)
+	}
+	{ // 用户路由
+		user := auth.Group("/user")
+		user.POST("/uploadImg", api.UploadImg)
+		user.GET("/getImgResult", api.GetImgResult)
+		user.GET("/insect", api.InsectInfo)
+		user.GET("/butterfly_info", api.ButterflyInfo)
+	}
 }
