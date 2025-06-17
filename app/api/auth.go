@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/HunDun0Ben/bs_server/app/middleware"
-	"github.com/HunDun0Ben/bs_server/app/service/user_service"
+	"github.com/HunDun0Ben/bs_server/app/service/usersvc"
 )
 
 type LoginRequest struct {
@@ -21,7 +21,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	user, err := user_service.NewUserService().FindByLogin(c, req.Username, req.Password)
+	user, err := usersvc.NewUserService().FindByLogin(c, req.Username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
 		return

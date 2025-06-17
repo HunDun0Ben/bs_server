@@ -12,7 +12,7 @@ func InitImgDB(cxt *gin.Context) {
 }
 
 func InitInsect(cxt *gin.Context) {
-	filepath := "/home/workspace/data/leedsbutterfly/butterfly_info.xlsx"
+	filepath := "/home/workspace/data/leedsbutterfly/butterfly_type_info.xlsx"
 	headstr := [...]string{
 		"分类器id", "中文名称", "英文名称", "拉丁学名",
 		"特征描述文本", "分布情况文本", "保护级别文本",

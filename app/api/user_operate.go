@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/HunDun0Ben/bs_server/app/service/butterfly_service"
+	"github.com/HunDun0Ben/bs_server/app/service/butterflytypesvc"
 	"github.com/HunDun0Ben/bs_server/common/data/imongo"
 )
 
@@ -51,7 +51,7 @@ func InsectInfo(cxt *gin.Context) {
 }
 
 func ButterflyInfo(cxt *gin.Context) {
-	insect_list, err := butterfly_service.NewButterflyService().GetList(cxt.Request.Context())
+	insect_list, err := butterflytypesvc.NewButterflyService().GetAllList(cxt.Request.Context())
 	if err != nil {
 		cxt.JSON(http.StatusInternalServerError, gin.H{"error": "error fetching butterfly info"})
 		return

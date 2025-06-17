@@ -34,6 +34,6 @@ func InitRoute(engine *gin.Engine) {
 		user.POST("/uploadImg", api.UploadImg)
 		user.GET("/getImgResult", api.GetImgResult)
 		user.GET("/insect", api.InsectInfo)
-		user.GET("/butterfly_info", api.ButterflyInfo)
+		user.GET("/butterfly_type_info", api.ButterflyInfo)
 	}
 }
