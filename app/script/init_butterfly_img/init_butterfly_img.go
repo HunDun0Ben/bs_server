@@ -12,9 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"gocv.io/x/gocv"
 
-	"github.com/HunDun0Ben/bs_server/app/entities/file"
-	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
-	"github.com/HunDun0Ben/bs_server/gocv/imgpro/core/ui"
+	"github.com/HunDun0Ben/bs_server/app/internal/model/file"
+	mcli "github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
+	"github.com/HunDun0Ben/bs_server/app/pkg/gocv/imgpro/core/ui"
 )
 
 var (
