@@ -20,7 +20,7 @@ func InitRoute(engine *gin.Engine) {
 
 	// jwt 认证路由组
 	auth := engine.Group("/")
-	if conf.GlobalViper.GetBool("jwt.enable") {
+	if conf.AppConfig.JWT.Enable {
 		auth.Use(middleware.JWTAuth())
 	}
 	// 以下的路由都来自 auth 组, 故需要通过 JWT 认证

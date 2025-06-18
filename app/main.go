@@ -33,9 +33,8 @@ func startServer() {
 	router := gin.Default()
 	r.InitRoute(router)
 
-	serverAddr := fmt.Sprintf(":%d", conf.GlobalViper.GetInt("server.port"))
 	server := &http.Server{
-		Addr:    serverAddr,
+		Addr:    fmt.Sprintf(":%d", conf.AppConfig.Server.Port),
 		Handler: router,
 	}
 

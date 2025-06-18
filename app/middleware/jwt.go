@@ -22,14 +22,14 @@ func GenerateToken(user user.User) (string, error) {
 	claims := Claims{
 		user.Username,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.GlobalViper.GetDuration("jwt.expiration"))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AppConfig.JWT.Expire)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			// 令牌启用时间
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(conf.GlobalViper.GetString("jwt.secret")))
+	return token.SignedString([]byte(conf.AppConfig.JWT.Secret))
 }
 
 // JWTAuth JWT 认证中间件.
@@ -53,7 +53,7 @@ func JWTAuth() gin.HandlerFunc {
 		claims := &Claims{}
 
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(conf.GlobalViper.GetString("jwt.secret")), nil
+			return []byte(conf.AppConfig.JWT.Secret), nil
 		})
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "无效的token"})

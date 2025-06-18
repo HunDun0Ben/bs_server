@@ -8,20 +8,24 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
+
+	"github.com/HunDun0Ben/bs_server/app/conf/confmodel"
 )
 
 var (
 	GlobalViper *viper.Viper            = viper.New()
 	AppViperMap map[string]*viper.Viper = make(map[string]*viper.Viper)
-)
+	AppConfig   confmodel.AppConfig
 
-var fs afero.Fs = afero.NewOsFs()
+	fs afero.Fs = afero.NewOsFs()
+)
 
 // 初始化全局配置.
 func init() {
 	// 启用环境变量支持覆盖配置文件
 	GlobalViper.AutomaticEnv()
 	loadAllConfig()
+	GlobalViper.Unmarshal(&AppConfig)
 }
 
 func loadAllConfig() {
