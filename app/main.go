@@ -12,10 +12,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	r "github.com/HunDun0Ben/bs_server/app/router"
-	"github.com/HunDun0Ben/bs_server/common/conf"
+	r "github.com/HunDun0Ben/bs_server/app/api"
+	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
 
-	mcli "github.com/HunDun0Ben/bs_server/common/data/imongo"
+	mcli "github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
 )
 
 func main() {
