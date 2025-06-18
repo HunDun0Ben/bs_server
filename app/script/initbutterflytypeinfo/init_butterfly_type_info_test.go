@@ -1,21 +1,35 @@
-package main
+package initbutterflyinfo_test
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"testing"
 
 	"github.com/xuri/excelize/v2"
 
 	"github.com/HunDun0Ben/bs_server/app/entities/insect"
+	"github.com/HunDun0Ben/bs_server/app/service/butterflytypesvc"
 )
 
 func main() {
 	list, _ := loadTypeInfoFromCSV()
 	slog.Info("list", slog.Any("list", list))
+}
+func init_butterfly_type_info() {
 
 }
 
-func loadTypeInfoFromCSV() ([]any, error) {
+func Test_init_butterfly_type_info(t *testing.T) {
+	list, _ := loadTypeInfoFromCSV()
+	err := butterflytypesvc.NewButterflyService().InitAll(context.Background(), list)
+	if err != nil {
+		slog.Error("初始化蝴蝶信息失败", "err", err)
+		return
+	}
+}
+
+func loadTypeInfoFromCSV() ([]insect.Insect, error) {
 	filepath := "./蝴蝶信息.xlsx"
 	// headStr := [...]string{"中文名称", "英文名称", "拉丁学名","特征描述文本", "分布情况文本", "保护级别", "别名"}.
 	f, err := excelize.OpenFile(filepath)
@@ -32,7 +46,7 @@ func loadTypeInfoFromCSV() ([]any, error) {
 		slog.Error("无法获取工作表的行数据.", "err", err)
 		return nil, err
 	}
-	list := make([]interface{}, 0)
+	list := make([]insect.Insect, 0)
 	for i, row := range rows {
 		if i == 0 {
 			continue
