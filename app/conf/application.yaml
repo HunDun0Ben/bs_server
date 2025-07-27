@@ -2,7 +2,7 @@ server:
   name: bs-server
   port: 8080
 log:
-  level: "debug"
+  level: debug
 jwt:
   enable: true
   secret: XnlDHd7CKmtU1oCVIbHLO4egNxbnMthLHqEchsk4RwnxPxGX80o+f0CwvM1EW0BR3DFQT/PU+xtF3qs6xFM68A==  # 请在生产环境中使用更安全的密钥

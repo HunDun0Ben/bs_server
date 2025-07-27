@@ -34,7 +34,7 @@ func loadAllConfig() {
 	if !ok {
 		app = "./"
 	}
-	if err := loadConfigFiles(app); err != nil {
+	if err := loadConfigFiles(app + "/conf"); err != nil {
 		panic(fmt.Errorf("加载配置文件失败: %v", err))
 	}
 }

@@ -2,7 +2,10 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "github.com/HunDun0Ben/bs_server/app/docs" // swagger docs
 	"github.com/HunDun0Ben/bs_server/app/internal/handler"
 	"github.com/HunDun0Ben/bs_server/app/middleware"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
@@ -10,17 +13,25 @@ import (
 
 func InitRoute(engine *gin.Engine) {
 	engine.Use(middleware.WebErrorHandler())
+
+	// 配置 Swagger 路由
+	// 访问 http://localhost:8080/swagger/index.html 即可查看文档
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 创建 API v1 路由组
+	apiV1 := engine.Group("/api/v1")
+
 	{
 		// 公开路由
-		public := engine.Group("/")
+		public := apiV1.Group("/")
 		public.POST("/login", handler.Login)
 		// 测试一些内容
-		otherTest := engine.Group("/test")
+		otherTest := apiV1.Group("/test")
 		otherTest.GET("/getAllProType", handler.GetProType)
 	}
 
 	// jwt 认证路由组
-	auth := engine.Group("/")
+	auth := apiV1.Group("/")
 	if conf.AppConfig.JWT.Enable {
 		auth.Use(middleware.JWTAuth)
 	}
