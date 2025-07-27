@@ -10,9 +10,10 @@ import (
 )
 
 func TestLoadAllConfig(t *testing.T) {
-	slog.Info("", "Viper Config Map", conf.GlobalViper.AllSettings())
+	settings := conf.GlobalViper.AllSettings()
+	slog.Info("", "Viper Config Map", settings)
 	json, _ := json.Marshal(conf.GlobalViper.AllSettings())
-	slog.Info("Viper Config JSON = ", "", string(json))
+	slog.Info("settings", slog.Any("json", json))
 }
 
 func TestGetDuration(t *testing.T) {

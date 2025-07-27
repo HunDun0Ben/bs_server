@@ -1,3 +1,22 @@
+
+// @title           蝴蝶识别系统 API
+// @version         1.0
+// @description     这是一个使用 Go, Gin, Gocv 和 MongoDB 构建的蝴蝶识别系统的服务端 API 文档。
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (
@@ -12,7 +31,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	r "github.com/HunDun0Ben/bs_server/app/api"
+	"github.com/HunDun0Ben/bs_server/app/api"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
 
 	mcli "github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
@@ -31,8 +50,7 @@ func loadDataBase() {
 
 func startServer() {
 	router := gin.Default()
-	r.InitRoute(router)
-
+	api.InitRoute(router)
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", conf.AppConfig.Server.Port),
 		Handler: router,
