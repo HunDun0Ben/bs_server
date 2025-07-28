@@ -1,0 +1,7 @@
+# Redis 配置
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: "" # 如果没有密码则留空
+  db: 0
+  pool_size: 100 # 连接池大小

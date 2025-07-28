@@ -3,11 +3,11 @@ package usersvc
 import (
 	"context"
 	"errors"
-	"os/user"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/HunDun0Ben/bs_server/app/internal/model/user"
 	"github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
 )
 
@@ -22,6 +22,18 @@ func NewUserService() *UserService {
 func (s *UserService) FindByLogin(ctx context.Context, username, password string) (*user.User, error) {
 	var u user.User
 	err := s.col.FindOne(ctx, bson.M{"username": username, "password": password}).Decode(&u)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (s *UserService) FindByUsername(ctx context.Context, username string) (*user.User, error) {
+	var u user.User
+	err := s.col.FindOne(ctx, bson.M{"username": username}).Decode(&u)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
