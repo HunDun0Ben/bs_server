@@ -12,7 +12,6 @@ import (
 )
 
 func InitRoute(engine *gin.Engine) {
-	engine.Use(middleware.WebErrorHandler())
 
 	// 配置 Swagger 路由
 	// 访问 http://localhost:8080/swagger/index.html 即可查看文档
@@ -20,22 +19,25 @@ func InitRoute(engine *gin.Engine) {
 
 	// 创建 API v1 路由组
 	apiV1 := engine.Group("/api/v1")
+	apiV1.Use(middleware.WebErrorHandler())
 
+	// 公开路由
 	{
-		// 公开路由
 		public := apiV1.Group("/")
 		public.POST("/login", handler.Login)
-		// 测试一些内容
+		public.POST("/token/refresh", handler.RefreshToken)
+	}
+	// 测试一些内容
+	{
 		otherTest := apiV1.Group("/test")
 		otherTest.GET("/getAllProType", handler.GetProType)
 	}
 
-	// jwt 认证路由组
+	// jwt 认证路由组, 需要通过 JWT 认证
 	auth := apiV1.Group("/")
 	if conf.AppConfig.JWT.Enable {
 		auth.Use(middleware.JWTAuth)
 	}
-	// 以下的路由都来自 auth 组, 故需要通过 JWT 认证
 	{ // 管理路由
 		manage := auth.Group("/manage")
 		manage.GET("/initInsect", handler.InitInsect)
