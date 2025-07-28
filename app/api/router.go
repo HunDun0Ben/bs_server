@@ -24,7 +24,7 @@ func InitRoute(engine *gin.Engine) {
 	// 公开路由
 	{
 		public := apiV1.Group("/")
-		public.POST("/login", handler.Login)
+		public.GET("/login", handler.Login)
 		public.POST("/token/refresh", handler.RefreshToken)
 	}
 	// 测试一些内容
@@ -36,8 +36,10 @@ func InitRoute(engine *gin.Engine) {
 	// jwt 认证路由组, 需要通过 JWT 认证
 	auth := apiV1.Group("/")
 	if conf.AppConfig.JWT.Enable {
-		auth.Use(middleware.JWTAuth)
+		auth.Use(middleware.JWTAuth())
 	}
+	auth.POST("/logout", handler.Logout)
+
 	{ // 管理路由
 		manage := auth.Group("/manage")
 		manage.GET("/initInsect", handler.InitInsect)
