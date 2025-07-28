@@ -1,10 +1,13 @@
 {
-    "editor.quickSuggestions": {
-        "strings": true
-    },
-    "editor.suggest.showWords": true,
-    "gopls": {
-        "formatting.local": "github.com/HunDun0Ben/bs_server"
-    },
-    "go.useLanguageServer": true
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "editor.suggest.showWords": true,
+  "gopls": {
+    "formatting.local": "github.com/HunDun0Ben/bs_server"
+  },
+  "go.useLanguageServer": true,
+  "go.testEnvVars": {
+    "GOAPP": "${workspaceFolder}/app/"
+  }
 }
