@@ -1,0 +1,10 @@
+{
+    "editor.quickSuggestions": {
+        "strings": true
+    },
+    "editor.suggest.showWords": true,
+    "gopls": {
+        "formatting.local": "github.com/HunDun0Ben/bs_server"
+    },
+    "go.useLanguageServer": true
+}
