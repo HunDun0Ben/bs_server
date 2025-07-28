@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/HunDun0Ben/bs_server/app/internal/dto"
+	"github.com/HunDun0Ben/bs_server/app/internal/service/authsvc"
 	"github.com/HunDun0Ben/bs_server/app/internal/service/usersvc"
+	"github.com/HunDun0Ben/bs_server/app/pkg/bscxt"
 	"github.com/HunDun0Ben/bs_server/app/pkg/bsjwt"
 	"github.com/HunDun0Ben/bs_server/app/pkg/bsvo"
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
@@ -30,25 +34,29 @@ func Login(cxt *gin.Context) {
 		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
 		return
 	}
-
+	// 查看用户信息
 	user, err := usersvc.NewUserService().FindByLogin(cxt, req.Username, req.Password)
-	if err != nil {
+	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
 		return
 	}
-	if user == nil {
-		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户不存在", nil, err))
-		return
-	}
-
-	tokenMap, err := bsjwt.GenerateTokenPair(*user)
+	// 生成对应 access and refresh token
+	accessTokenStr, refreshTokenStr, claims, err := bsjwt.GenerateTokenPair(*user)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
 		return
 	}
+	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
+
+	if err != nil {
+		slog.Error("存储Token失败")
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
+		return
+	}
+
 	helper.Success(cxt, dto.LoginResponse{
-		AccessToken:  tokenMap["access_token"],
-		RefreshToken: tokenMap["refresh_token"],
+		AccessToken:  accessTokenStr,
+		RefreshToken: refreshTokenStr,
 	})
 }
 
@@ -72,18 +80,84 @@ func RefreshToken(cxt *gin.Context) {
 	}
 
 	claims, err := bsjwt.ParseToken(req.RefreshToken)
-	if err != nil || claims.Subject != "refresh_token" {
+	if err != nil || claims.Subject != bsjwt.RefreshToken {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 无效", nil, err))
 		return
 	}
-
-	newAccessToken, err := bsjwt.GenerateAccessToken(claims.Username)
+	// 查找对应 jti 的 refresh token 是否存在
+	storedUsername, err := authsvc.IsRefreshTokenValid(claims.ID)
 	if err != nil {
-		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成新Token失败", nil, err))
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 已失效或不存在", nil, err))
 		return
 	}
 
-	helper.Success(cxt, dto.RefreshTokenResponse{
-		AccessToken: newAccessToken,
+	authHeader := cxt.GetHeader(bsjwt.AuthHeaderName)
+	claims, err = bsjwt.ParseTokenByHeader(authHeader)
+	if err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "", nil, err))
+		cxt.Abort()
+		return
+	}
+
+	if storedUsername != claims.Username {
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 与用户不匹配", nil, err))
+		return
+	}
+
+	// 查找用户信息
+	user, err := usersvc.NewUserService().FindByUsername(cxt, storedUsername)
+	if err != nil || user == nil {
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
+		return
+	}
+
+	// 生成对应 access and refresh token
+	accessTokenStr, refreshTokenStr, claims, err := bsjwt.GenerateTokenPair(*user)
+	if err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
+		return
+	}
+	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
+
+	if err != nil {
+		slog.Error("存储Token失败")
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
+		return
+	}
+
+	helper.Success(cxt, dto.LoginResponse{
+		AccessToken:  accessTokenStr,
+		RefreshToken: refreshTokenStr,
 	})
+}
+
+// Logout godoc
+// @Summary      用户登出
+// @Description  用户登出，将当前 Access Token 加入黑名单使其失效
+// @Tags         需要授权
+// @Security     ApiKeyAuth
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  dto.SwaggerResponse "成功响应"
+// @Failure      401  {object}  dto.SwaggerResponse "认证失败"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /logout [post]
+func Logout(cxt *gin.Context) {
+	jti := cxt.GetString(bscxt.ContextJTIKey)
+	ExpiresAt := cxt.GetTime(bscxt.ExpiresAtKey)
+
+	remainingTime := time.Until(ExpiresAt)
+	if remainingTime <= 0 {
+		helper.Success(cxt, gin.H{"message": "登出成功，Token已自然过期"})
+		return
+	}
+
+	_ = authsvc.InvalidateRefreshToken(jti)
+	err := authsvc.InvalidateAccessToken(jti, remainingTime)
+	if err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登出操作失败", nil, err))
+		return
+	}
+
+	helper.Success(cxt, gin.H{"message": "登出成功"})
 }
