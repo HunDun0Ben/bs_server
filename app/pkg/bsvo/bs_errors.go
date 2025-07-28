@@ -1,4 +1,4 @@
-package bserr
+package bsvo
 
 import "fmt"
 

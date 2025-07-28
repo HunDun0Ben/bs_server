@@ -7,8 +7,8 @@ import (
 
 	"github.com/HunDun0Ben/bs_server/app/internal/dto"
 	"github.com/HunDun0Ben/bs_server/app/internal/service/usersvc"
-	"github.com/HunDun0Ben/bs_server/app/pkg/bserr"
 	"github.com/HunDun0Ben/bs_server/app/pkg/bsjwt"
+	"github.com/HunDun0Ben/bs_server/app/pkg/bsvo"
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
 )
 
@@ -27,24 +27,63 @@ import (
 func Login(cxt *gin.Context) {
 	var req dto.LoginRequest
 	if err := cxt.ShouldBindJSON(&req); err != nil {
-		cxt.Error(bserr.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
+		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
 		return
 	}
 
 	user, err := usersvc.NewUserService().FindByLogin(cxt, req.Username, req.Password)
 	if err != nil {
-		cxt.Error(bserr.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
 		return
 	}
 	if user == nil {
-		cxt.Error(bserr.NewAppError(http.StatusUnauthorized, "用户不存在", nil, err))
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户不存在", nil, err))
 		return
 	}
 
-	token, err := bsjwt.GenerateToken(*user)
+	tokenMap, err := bsjwt.GenerateTokenPair(*user)
 	if err != nil {
-		cxt.Error(bserr.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
 		return
 	}
-	helper.Success(cxt, dto.LoginResponse{Token: token})
+	helper.Success(cxt, dto.LoginResponse{
+		AccessToken:  tokenMap["access_token"],
+		RefreshToken: tokenMap["refresh_token"],
+	})
+}
+
+// RefreshToken godoc
+// @Summary      刷新 Access Token
+// @Description  使用 Refresh Token 获取一个新的 Access Token
+// @Tags         公开路由
+// @Accept       json
+// @Produce      json
+// @Param        body body dto.RefreshTokenRequest true "Refresh Token"
+// @Success      200  {object}  dto.SwaggerResponse{data=dto.RefreshTokenResponse} "成功响应，返回新的 Access Token"
+// @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
+// @Failure      401  {object}  dto.SwaggerResponse "Refresh Token 无效或已过期"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /token/refresh [post]
+func RefreshToken(cxt *gin.Context) {
+	var req dto.RefreshTokenRequest
+	if err := cxt.ShouldBindJSON(&req); err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
+		return
+	}
+
+	claims, err := bsjwt.ParseToken(req.RefreshToken)
+	if err != nil || claims.Subject != "refresh_token" {
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 无效", nil, err))
+		return
+	}
+
+	newAccessToken, err := bsjwt.GenerateAccessToken(claims.Username)
+	if err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成新Token失败", nil, err))
+		return
+	}
+
+	helper.Success(cxt, dto.RefreshTokenResponse{
+		AccessToken: newAccessToken,
+	})
 }

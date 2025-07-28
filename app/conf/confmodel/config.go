@@ -12,9 +12,10 @@ type LogConfig struct {
 }
 
 type JWTConfig struct {
-	Enable bool
-	Secret string
-	Expire time.Duration
+	Enable        bool
+	Secret        string
+	Expire        time.Duration
+	RefreshExpire time.Duration
 }
 
 type AppConfig struct {
