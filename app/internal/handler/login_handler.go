@@ -27,10 +27,11 @@ import (
 // @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
 // @Failure      401  {object}  dto.SwaggerResponse "用户名或密码错误"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
-// @Router       /login [post]
+// @Router       /login [get]
 func Login(cxt *gin.Context) {
 	var req dto.LoginRequest
-	if err := cxt.ShouldBindJSON(&req); err != nil {
+
+	if err := cxt.Bind(&req); err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
 		return
 	}
