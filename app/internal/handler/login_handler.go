@@ -19,11 +19,11 @@ import (
 // Login godoc
 // @Summary      用户登录
 // @Description  用户使用用户名和密码进行登录，成功后返回 JWT Token。
-// @Tags         公开路由
+// @Tags         LoginController
 // @Accept       json
 // @Produce      json
 // @Param        login body dto.LoginRequest true "登录凭据"
-// @Success      200  {object}  dto.SwaggerResponse{data=dto.LoginResponse} "成功响应，返回 JWT Token"
+// @Success      200  {object}  dto.SwaggerResponse{data=dto.LoginResponse} "成功响应，Access Token 在响应体中，Refresh Token 在 HttpOnly Cookie 中"
 // @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
 // @Failure      401  {object}  dto.SwaggerResponse "用户名或密码错误"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
@@ -55,32 +55,31 @@ func Login(cxt *gin.Context) {
 		return
 	}
 
+	cxt.SetCookie("refreshToken", refreshTokenStr, int(time.Until(claims.ExpiresAt.Time).Seconds()), "/api/token/refresh", "", true, true)
 	helper.Success(cxt, dto.LoginResponse{
-		AccessToken:  accessTokenStr,
-		RefreshToken: refreshTokenStr,
+		AccessToken: accessTokenStr,
 	})
 }
 
 // RefreshToken godoc
 // @Summary      刷新 Access Token
 // @Description  使用 Refresh Token 获取一个新的 Access Token
-// @Tags         公开路由
+// @Tags         LoginController
 // @Accept       json
 // @Produce      json
-// @Param        body body dto.RefreshTokenRequest true "Refresh Token"
-// @Success      200  {object}  dto.SwaggerResponse{data=dto.RefreshTokenResponse} "成功响应，返回新的 Access Token"
+// @Success      200  {object}  dto.SwaggerResponse{data=dto.RefreshTokenResponse} "成功响应，返回新的 Access Token，Refresh Token 在 HttpOnly Cookie 中"
 // @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
 // @Failure      401  {object}  dto.SwaggerResponse "Refresh Token 无效或已过期"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
-// @Router       /token/refresh [post]
+// @Router       /token/refresh [get]
 func RefreshToken(cxt *gin.Context) {
-	var req dto.RefreshTokenRequest
-	if err := cxt.ShouldBindJSON(&req); err != nil {
-		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
+	refreshTokenStr, err := cxt.Cookie("refreshToken")
+	if err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 不存在", nil, err))
 		return
 	}
 
-	claims, err := bsjwt.ParseToken(req.RefreshToken)
+	claims, err := bsjwt.ParseToken(refreshTokenStr)
 	if err != nil || claims.Subject != bsjwt.RefreshToken {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 无效", nil, err))
 		return
@@ -126,16 +125,16 @@ func RefreshToken(cxt *gin.Context) {
 		return
 	}
 
+	cxt.SetCookie("refreshToken", refreshTokenStr, int(time.Until(claims.ExpiresAt.Time).Seconds()), "/api/token/refresh", "", true, true)
 	helper.Success(cxt, dto.LoginResponse{
-		AccessToken:  accessTokenStr,
-		RefreshToken: refreshTokenStr,
+		AccessToken: accessTokenStr,
 	})
 }
 
 // Logout godoc
 // @Summary      用户登出
 // @Description  用户登出，将当前 Access Token 加入黑名单使其失效
-// @Tags         需要授权
+// @Tags         LoginController
 // @Security     ApiKeyAuth
 // @Accept       json
 // @Produce      json

@@ -14,7 +14,7 @@ func InitImgDB(cxt *gin.Context) {
 // InitInsect godoc
 // @Summary      初始化昆虫信息
 // @Description  从服务器的预定路径读取 Excel 文件，并将蝴蝶物种信息初始化到数据库中。这是一个管理接口。
-// @Tags         管理路由
+// @Tags         ManagerController
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  dto.SwaggerResponse{data=string} "成功响应，返回操作成功的消息"
@@ -56,7 +56,7 @@ func InitInsect(cxt *gin.Context) {
 // InitClassification godoc
 // @Summary      初始化分类器
 // @Description  执行分类器的初始化或训练任务。这是一个管理接口。
-// @Tags         管理路由
+// @Tags         ManagerController
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  dto.SwaggerResponse{data=string} "成功响应，返回操作成功的消息"

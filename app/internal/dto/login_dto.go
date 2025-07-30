@@ -9,13 +9,9 @@ type LoginRequest struct {
 // LoginResponse 定义了成功登录后返回的数据结构
 type LoginResponse struct {
 	AccessToken  string `json:"accessToken"`  // JWT 访问令牌
-	RefreshToken string `json:"refreshToken"` // JWT 刷新令牌
 }
 
-// RefreshTokenRequest 定义了刷新令牌的请求体
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refreshToken" binding:"required"` // JWT 刷新令牌
-}
+
 
 // RefreshTokenResponse 定义了刷新令牌后返回的数据结构
 type RefreshTokenResponse struct {

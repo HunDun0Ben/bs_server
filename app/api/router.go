@@ -25,7 +25,7 @@ func InitRoute(engine *gin.Engine) {
 	{
 		public := apiV1.Group("/")
 		public.GET("/login", handler.Login)
-		public.POST("/token/refresh", handler.RefreshToken)
+		public.GET("/token/refresh", handler.RefreshToken)
 	}
 	// 测试一些内容
 	{
