@@ -12,6 +12,8 @@ import (
 )
 
 func InitRoute(engine *gin.Engine) {
+	// 自定义处理 404 请求
+	engine.NoRoute(middleware.NoRouteHandler())
 
 	// 配置 Swagger 路由
 	// 访问 http://localhost:8080/swagger/index.html 即可查看文档
