@@ -4,9 +4,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"image/color"
+	"log/slog"
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"gocv.io/x/gocv"
@@ -48,38 +50,38 @@ func Mat2DBMat(mat *gocv.Mat) (*imongo.DBMat, error) {
 
 func PrintMat(mat gocv.Mat) {
 	rows, cols := mat.Rows(), mat.Cols()
-	fmt.Printf("Mat Size: %dx%d, Type: %d\n", rows, cols, mat.Type())
-
+	slog.Info(fmt.Sprintf("Mat Size: %dx%d, Type: %d\n", rows, cols, mat.Type()))
+	var line strings.Builder
 	switch mat.Type() {
 	case gocv.MatTypeCV8U:
 		for i := 0; i < rows; i++ {
 			for j := 0; j < cols; j++ {
-				fmt.Printf("%3d ", mat.GetUCharAt(i, j))
+				fmt.Fprintf(&line, "%3d ", mat.GetUCharAt(i, j))
 			}
-			fmt.Println()
+			slog.Info("matrix row", "row", i, "values", line.String())
 		}
 	case gocv.MatTypeCV32F:
 		for i := 0; i < rows; i++ {
 			for j := 0; j < cols; j++ {
-				fmt.Printf("%.2f ", mat.GetFloatAt(i, j))
+				fmt.Fprintf(&line, "%.2f ", mat.GetFloatAt(i, j))
 			}
-			fmt.Println()
+			slog.Info("matrix row", "row", i, "values", line.String())
 		}
 	case gocv.MatTypeCV32S:
 		for i := 0; i < rows; i++ {
 			for j := 0; j < cols; j++ {
-				fmt.Printf("%d ", mat.GetIntAt(i, j))
+				fmt.Fprintf(&line, "%d ", mat.GetIntAt(i, j))
 			}
-			fmt.Println()
+			slog.Info("matrix row", "row", i, "values", line.String())
 		}
 	default:
-		fmt.Println("不支持的 Mat 类型打印")
+		slog.Warn("Unsupported Mat type for printing", "type", mat.Type())
 	}
 }
 
 func SaveMatToCSV(mat gocv.Mat, filename string) {
 	if mat.Channels() != 1 {
-		fmt.Println("仅支持单通道 Mat")
+		slog.Warn("Only single-channel Mat is supported for saving to CSV")
 		return
 	}
 
@@ -88,7 +90,7 @@ func SaveMatToCSV(mat gocv.Mat, filename string) {
 
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println("创建文件失败：", err)
+		slog.Error("Failed to create file", "filename", filename, "err", err)
 		return
 	}
 	defer file.Close()

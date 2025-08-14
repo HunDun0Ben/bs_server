@@ -1,7 +1,7 @@
 package timerutil
 
 import (
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -45,13 +45,13 @@ func (t *TimerUtil) GetTimerWithFlag(flag string) int64 {
 // StopTimer 打印所有计时信息.
 func (t *TimerUtil) StopTimer() {
 	stop := time.Now()
-	log.Println("Stop timer.")
+	slog.Info("Stop timer.")
 	t.timers.Range(func(key, value interface{}) bool {
 		flag, ok1 := key.(string)
 		startTime, ok2 := value.(time.Time)
 		if ok1 && ok2 {
 			elapsed := stop.Sub(startTime).Milliseconds()
-			log.Printf("flag = %s, spend time %d ms.\n", flag, elapsed)
+			slog.Info("time spend", "flag", flag, "spend_ms", elapsed)
 		}
 		return true
 	})

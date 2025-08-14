@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -29,16 +29,19 @@ func InitInsect(cxt *gin.Context) {
 	}
 	f, err := excelize.OpenFile(filepath)
 	if err != nil {
-		panic(err)
+		slog.Error("open file error", "err", err)
+		return
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Print(err)
+			slog.Error("close file error", "err", err)
 		}
 	}()
+
 	rows, err := f.GetRows("Sheet1")
 	if err != nil {
-		panic(err)
+		slog.Error("get rows error", "err", err)
+		return
 	}
 	for i, row := range rows {
 		if i == 0 {
@@ -48,9 +51,9 @@ func InitInsect(cxt *gin.Context) {
 		for _, colCell := range row {
 			a += colCell + "\t"
 		}
-		log.Println(a)
+		slog.Info(a)
 	}
-	log.Println(headstr)
+	slog.Info("excel head", "head", headstr)
 }
 
 // InitClassification godoc

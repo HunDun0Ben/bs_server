@@ -3,7 +3,7 @@ package gexcel
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"reflect"
 	"strings"
 
@@ -15,7 +15,8 @@ func WriteData(records interface{}) error {
 	sheetName := "sheet1"
 	index, err := xlsx.NewSheet("sheet1")
 	if err != nil {
-		panic(err)
+		slog.Error("create new sheet error", "err", err)
+		return err
 	}
 	xlsx.SetActiveSheet(index)
 	sType := reflect.TypeOf(records)
@@ -30,7 +31,7 @@ func WriteData(records interface{}) error {
 	setRow(xlsx, sheetName, records)
 	// 根据指定路径保存文件
 	if err := xlsx.SaveAs("Book1.xlsx"); err != nil {
-		println(err.Error())
+		slog.Error("save file error", "err", err)
 	}
 	return nil
 }
@@ -49,7 +50,7 @@ func setTitleRow(xlsx *excelize.File, sheetName string, obj interface{}) {
 		position := fmt.Sprintf("%s%d", string(rune(basicColIndex+i)), 1)
 		err := xlsx.SetCellValue(sheetName, position, name)
 		if err != nil {
-			log.Print(err)
+			slog.Error("set cell value error", "err", err)
 		}
 	}
 }
@@ -72,7 +73,7 @@ func setRow(xlsx *excelize.File, sheetName string, objs interface{}) {
 			position := fmt.Sprintf("%s%d", string(rune(basicColIndex+j)), i+2)
 			err := xlsx.SetCellValue(sheetName, position, elemValue.Field(j).Interface())
 			if err != nil {
-				log.Print(err)
+				slog.Error("set cell value error", "err", err)
 			}
 		}
 	}
