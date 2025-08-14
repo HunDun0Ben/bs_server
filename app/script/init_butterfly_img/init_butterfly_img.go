@@ -72,7 +72,7 @@ func InsertImg() {
 				log.Fatal(err)
 			}
 			fmt.Printf("name:%s, path:%s \n", info.Name(), path)
-			file := file.NewButterflyFile(info.Name(), ext, path, content, maskContent)
+			file := file.NewButterflyFileWithContent(info.Name(), ext, path, content, maskContent)
 			fmt.Printf("file:%s, %s\n", file.FileName, file.Path)
 			insertResult, err := collection.InsertOne(context.Background(), file)
 			if err != nil {

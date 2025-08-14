@@ -1,6 +1,8 @@
 package file
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
 )
 
@@ -17,7 +19,8 @@ type ResizedButteryflyFile struct {
 	DescribMat           imongo.DBMat `bson:"describ_mat,omitempty"`
 }
 
-func NewButterflyFile(fileName, typeName, path string, content, maskContent []byte) *ButterflyFile {
+// NewButterflyFileWithContent creates a legacy ButterflyFile with embedded content.
+func NewButterflyFileWithContent(fileName, typeName, path string, content, maskContent []byte) *ButterflyFile {
 	return &ButterflyFile{
 		MaskContent: maskContent,
 		FileStoreData: imongo.FileStoreData{
@@ -25,6 +28,19 @@ func NewButterflyFile(fileName, typeName, path string, content, maskContent []by
 			TypeName: typeName,
 			Path:     path,
 			Content:  content,
+		},
+	}
+}
+
+// NewButterflyFileWithGridFS creates a new ButterflyFile with a GridFS reference.
+func NewButterflyFileWithGridFS(fileID primitive.ObjectID, fileName, typeName, path string, maskContent []byte) *ButterflyFile {
+	return &ButterflyFile{
+		MaskContent: maskContent,
+		FileStoreData: imongo.FileStoreData{
+			FileID:   fileID,
+			FileName: fileName,
+			TypeName: typeName,
+			Path:     path,
 		},
 	}
 }
