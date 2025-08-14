@@ -48,7 +48,6 @@ func Login(cxt *gin.Context) {
 		return
 	}
 	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
-
 	if err != nil {
 		slog.Error("存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
@@ -118,7 +117,6 @@ func RefreshToken(cxt *gin.Context) {
 		return
 	}
 	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
-
 	if err != nil {
 		slog.Error("存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))

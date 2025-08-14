@@ -60,7 +60,7 @@ func GenerateRefreshToken() (string, *Claims, error) {
 	return refreshTokenString, refreshClaims, err
 }
 
-// GenerateAccessToken 只生成 Access Token
+// GenerateAccessToken 只生成 Access Token.
 func GenerateAccessToken(username string, roles []string) (string, error) {
 	claims := Claims{
 		username,
@@ -79,7 +79,7 @@ func GenerateAccessToken(username string, roles []string) (string, error) {
 
 // ParseToken 解析 JWT token.
 func ParseToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		return []byte(conf.AppConfig.JWT.Secret), nil
 	})
 	if err != nil {

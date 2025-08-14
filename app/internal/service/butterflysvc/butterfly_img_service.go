@@ -22,8 +22,8 @@ type butterflyImgSvc struct {
 }
 
 type ButterflyImgSvc interface {
-	GetAllList(ctx context.Context, filter interface{}) ([]file.ButterflyFile, error)
-	FindOne(ctx context.Context, filter interface{}) (*file.ButterflyFile, error)
+	GetAllList(ctx context.Context, filter any) ([]file.ButterflyFile, error)
+	FindOne(ctx context.Context, filter any) (*file.ButterflyFile, error)
 }
 
 func NewButterflyImgSvc() ButterflyImgSvc {
@@ -32,11 +32,11 @@ func NewButterflyImgSvc() ButterflyImgSvc {
 	}
 }
 
-func (s *butterflyImgSvc) GetAllList(ctx context.Context, filter interface{}) ([]file.ButterflyFile, error) {
+func (s *butterflyImgSvc) GetAllList(ctx context.Context, filter any) ([]file.ButterflyFile, error) {
 	return imongoutil.FindAll[file.ButterflyFile](ctx, s.col, filter)
 }
 
-func (s *butterflyImgSvc) FindOne(ctx context.Context, filter interface{}) (*file.ButterflyFile, error) {
+func (s *butterflyImgSvc) FindOne(ctx context.Context, filter any) (*file.ButterflyFile, error) {
 	result, _ := imongoutil.FindOne[file.ButterflyFile](ctx, s.col, filter)
 	return result, nil
 }
@@ -47,9 +47,9 @@ type butterflyResizedImgSvc struct {
 
 type ButterflyResizedImgSvc interface {
 	Insert(ctx context.Context, file *file.ResizedButteryflyFile) error
-	FindOne(ctx context.Context, filter interface{}) (*file.ResizedButteryflyFile, error)
-	GetAllList(ctx context.Context, filter interface{}) ([]file.ResizedButteryflyFile, error)
-	Update(ctx context.Context, filter interface{}, update interface{}) error
+	FindOne(ctx context.Context, filter any) (*file.ResizedButteryflyFile, error)
+	GetAllList(ctx context.Context, filter any) ([]file.ResizedButteryflyFile, error)
+	Update(ctx context.Context, filter any, update any) error
 }
 
 func NewButterflyResizedImgSvc() ButterflyResizedImgSvc {
@@ -58,7 +58,7 @@ func NewButterflyResizedImgSvc() ButterflyResizedImgSvc {
 	}
 }
 
-func (s *butterflyResizedImgSvc) GetAllList(ctx context.Context, filter interface{}) ([]file.ResizedButteryflyFile, error) {
+func (s *butterflyResizedImgSvc) GetAllList(ctx context.Context, filter any) ([]file.ResizedButteryflyFile, error) {
 	return imongoutil.FindAll[file.ResizedButteryflyFile](ctx, s.col, filter,
 		options.Find().SetSort(bson.D{{Key: "_id", Value: 1}}),
 	)
@@ -68,12 +68,12 @@ func (s *butterflyResizedImgSvc) Insert(ctx context.Context, file *file.ResizedB
 	return imongoutil.Insert[butterflyResizedImgSvc](ctx, s.col, file)
 }
 
-func (s *butterflyResizedImgSvc) FindOne(ctx context.Context, filter interface{}) (*file.ResizedButteryflyFile, error) {
+func (s *butterflyResizedImgSvc) FindOne(ctx context.Context, filter any) (*file.ResizedButteryflyFile, error) {
 	result, _ := imongoutil.FindOne[file.ResizedButteryflyFile](ctx, s.col, filter)
 	return result, nil
 }
 
-func (s *butterflyResizedImgSvc) Update(ctx context.Context, filter interface{}, update interface{}) error {
+func (s *butterflyResizedImgSvc) Update(ctx context.Context, filter, update any) error {
 	_, err := s.col.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err

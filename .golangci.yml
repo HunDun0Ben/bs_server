@@ -1,110 +1,110 @@
 ### 抄袭 viper
 run:
-    timeout: 5m
-    skip-dirs:
-        - vendor       # Go 依赖管理中常用的第三方包目录
-        - third_party  # 其他外部库目录（根据项目结构自定义）
-        - external     # 另一种外部代码存放目录
+  timeout: 5m
+  issues.exclude-dirs:
+    - vendor # Go 依赖管理中常用的第三方包目录
+    - third_party # 其他外部库目录（根据项目结构自定义）
+    - external # 另一种外部代码存放目录
 
 linters-settings:
-    gci:
-        sections:
-            - standard
-            - default
-            - prefix(github.com/HunDun0Ben/bs_server)
-    gocritic:
-        # Enable multiple checks by tags. See "Tags" section in https://github.com/go-critic/go-critic#usage.
-        enabled-tags:
-            - diagnostic
-            - experimental
-            - opinionated
-            - style
-        disabled-checks:
-            - importShadow
-            - unnamedResult
-    goimports:
-        local-prefixes: github.com/HunDun0Ben/bs_server
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/HunDun0Ben/bs_server)
+  gocritic:
+    # Enable multiple checks by tags. See "Tags" section in https://github.com/go-critic/go-critic#usage.
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - style
+    disabled-checks:
+      - importShadow
+      - unnamedResult
+  goimports:
+    local-prefixes: github.com/HunDun0Ben/bs_server
 
 linters:
-    disable-all: true
-    enable:
-        - bodyclose
-        - dogsled
-        - dupl
-        - durationcheck
-        - exhaustive
-        - gci
-        - gocritic
-        - godot
-        - gofmt
-        - gofumpt
-        - goimports
-        - gomoddirectives
-        - goprintffuncname
-        - govet
-        - importas
-        - ineffassign
-        - makezero
-        - misspell
-        - nakedret
-        - nilerr
-        - noctx
-        - nolintlint
-        - prealloc
-        - predeclared
-        - revive
-        - rowserrcheck
-        - sqlclosecheck
-        - staticcheck
-        - stylecheck
-        - tparallel
-        - typecheck
-        - unconvert
-        - unparam
-        - unused
-        - wastedassign
-        - whitespace
+  disable-all: true
+  enable:
+    - bodyclose
+    - dogsled
+    - dupl
+    - durationcheck
+    - exhaustive
+    - gci
+    - gocritic
+    - godot
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomoddirectives
+    - goprintffuncname
+    - govet
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - stylecheck
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
 
-        # fixme
-        # - cyclop
-        # - errcheck
-        # - errorlint
-        # - exhaustivestruct
-        # - forbidigo
-        # - forcetypeassert
-        # - gochecknoglobals
-        # - gochecknoinits
-        # - gocognit
-        # - goconst
-        # - gocyclo
-        # - gosec
-        # - gosimple
-        # - ifshort
-        # - lll
-        # - nlreturn
-        # - paralleltest
-        # - scopelint
-        # - thelper
-        # - wrapcheck
+    # fixme
+    # - cyclop
+    # - errcheck
+    # - errorlint
+    # - exhaustivestruct
+    # - forbidigo
+    # - forcetypeassert
+    # - gochecknoglobals
+    # - gochecknoinits
+    # - gocognit
+    # - goconst
+    # - gocyclo
+    # - gosec
+    # - gosimple
+    # - ifshort
+    # - lll
+    # - nlreturn
+    # - paralleltest
+    # - scopelint
+    # - thelper
+    # - wrapcheck
 
-        # unused
-        # - depguard
-        # - goheader
-        # - gomodguard
+    # unused
+    # - depguard
+    # - goheader
+    # - gomodguard
 
-        # deprecated
-        # - deadcode
-        # - structcheck
-        # - varcheck
+    # deprecated
+    # - deadcode
+    # - structcheck
+    # - varcheck
 
-        # don't enable:
-        # - asciicheck
-        # - funlen
-        # - godox
-        # - goerr113
-        # - gomnd
-        # - interfacer
-        # - maligned
-        # - nestif
-        # - testpackage
-        # - wsl
+    # don't enable:
+    # - asciicheck
+    # - funlen
+    # - godox
+    # - goerr113
+    # - gomnd
+    # - interfacer
+    # - maligned
+    # - nestif
+    # - testpackage
+    # - wsl

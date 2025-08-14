@@ -25,7 +25,7 @@ type AppConfig struct {
 	Redis  RedisConfig
 }
 
-// RedisConfig 定义了 Redis 的配置
+// RedisConfig 定义了 Redis 的配置.
 type RedisConfig struct {
 	Host     string `mapstructure:"host"`
 	Port     int    `mapstructure:"port"`

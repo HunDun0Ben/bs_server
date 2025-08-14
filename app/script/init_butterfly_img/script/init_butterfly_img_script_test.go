@@ -52,7 +52,7 @@ func TestKmeans(t *testing.T) {
 	centers := gocv.NewMat()
 	criteria := gocv.NewTermCriteria(gocv.Count|gocv.EPS, 10, 1.0)
 
-	var k int = 20
+	k := 20
 	res := gocv.KMeans(allDescrib, k, &labels, criteria, 3, gocv.KMeansPPCenters, &centers)
 	fmt.Printf("Mat allDescrib Size: %dx%d, Type: %d\n", allDescrib.Rows(), allDescrib.Rows(), allDescrib.Type())
 	fmt.Printf("Mat Labels Size: %dx%d, Type: %d\n", labels.Rows(), labels.Rows(), labels.Type())
@@ -61,12 +61,12 @@ func TestKmeans(t *testing.T) {
 	// labels 是一条 features 所分配到 centers 的节点
 	storeKmeans(&labels, &centers)
 
-	var start int = 0
+	var start int
 	tranningData := gocv.NewMat()
 
 	for _, item := range list {
-		img_tag, _ := strconv.Atoi(item.Type)
-		bow := buildBowHistogram(&labels, k, 0, item.DescribMat.Row, img_tag)
+		imgTag, _ := strconv.Atoi(item.Type)
+		bow := buildBowHistogram(&labels, k, 0, item.DescribMat.Row, imgTag)
 		start += item.DescribMat.Row
 		if tranningData.Cols() == 0 {
 			tranningData = bow
@@ -117,6 +117,6 @@ func storeKmeans(labels, centers *gocv.Mat) {
 }
 
 func Test(t *testing.T) {
-	var a int = 123
+	a := 123
 	slog.Info("", "int 2 to float", float32(a))
 }

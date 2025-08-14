@@ -3,6 +3,7 @@ package imgutils
 import (
 	"image"
 	"image/color"
+	"math"
 
 	"gocv.io/x/gocv"
 )
@@ -17,7 +18,7 @@ func ResizeWithPadding(src gocv.Mat, targetWidth, targetHeight int, padColor col
 	srcHeight := src.Rows()
 
 	// 计算等比例缩放后的新尺寸
-	scale := min(float64(targetWidth)/float64(srcWidth), float64(targetHeight)/float64(srcHeight))
+	scale := math.Min(float64(targetWidth)/float64(srcWidth), float64(targetHeight)/float64(srcHeight))
 	newWidth := int(float64(srcWidth) * scale)
 	newHeight := int(float64(srcHeight) * scale)
 
@@ -39,11 +40,4 @@ func ResizeWithPadding(src gocv.Mat, targetWidth, targetHeight int, padColor col
 	resized.Close()
 
 	return output
-}
-
-func min(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
 }

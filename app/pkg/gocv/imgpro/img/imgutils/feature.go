@@ -9,7 +9,7 @@ import (
 
 func DrawImgSIFT(mat *gocv.Mat) (*gocv.Mat, error) {
 	if mat.Empty() {
-		return nil, errors.New("Image cannot be empty.")
+		return nil, errors.New("image cannot be empty")
 	}
 	sift := gocv.NewSIFT()
 	defer sift.Close()

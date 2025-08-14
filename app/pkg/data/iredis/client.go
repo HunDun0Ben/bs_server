@@ -15,7 +15,7 @@ var (
 	once sync.Once
 )
 
-// GetRDB 返回 Redis 客户端单例
+// GetRDB 返回 Redis 客户端单例.
 func GetRDB() *redis.Client {
 	once.Do(func() {
 		cfg := conf.AppConfig.Redis

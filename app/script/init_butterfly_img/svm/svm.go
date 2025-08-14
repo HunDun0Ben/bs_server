@@ -16,7 +16,7 @@ import (
 	"unsafe"
 )
 
-// 读取CSV文件，返回二维特征矩阵和标签数组
+// 读取CSV文件，返回二维特征矩阵和标签数组.
 func readCSV(file string) ([][]float64, []float64, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -30,8 +30,8 @@ func readCSV(file string) ([][]float64, []float64, error) {
 		return nil, nil, err
 	}
 
-	var features [][]float64
-	var labels []float64
+	features := make([][]float64, 0, len(lines)) // 预分配容量
+	labels := make([]float64, 0, len(lines))
 
 	for _, line := range lines {
 		n := len(line)
@@ -120,7 +120,7 @@ func traning(prob *C.struct_svm_problem, param *C.struct_svm_parameter, features
 	}
 	// 训练模型
 	model := C.svm_train(prob, param)
-	defer C.svm_free_and_destroy_model(&model)
+	defer C.svm_free_and_destroy_model(&model) //nolint:gocritic
 	var ct int
 	for i := 0; i < 120; i++ {
 		testNode := createSvmNode(features[0+i])
@@ -133,7 +133,7 @@ func traning(prob *C.struct_svm_problem, param *C.struct_svm_parameter, features
 }
 
 // 伪代码，示范参数结构体初始化.
-func newSvmParameter(nu float64, gamma float64) *C.struct_svm_parameter {
+func newSvmParameter(nu, gamma float64) *C.struct_svm_parameter {
 	var param C.struct_svm_parameter
 	param.svm_type = C.C_SVC
 	param.kernel_type = 2

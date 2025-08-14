@@ -16,7 +16,7 @@ const (
 	RefreshTokenKeyTemplate = "refresh_token:%s"
 )
 
-func StoreRefreshToken(jti string, username string, expiration time.Duration) error {
+func StoreRefreshToken(jti, username string, expiration time.Duration) error {
 	// 设置 Refresh token 到 redis 中
 	redisKey := fmt.Sprintf(RefreshTokenKeyTemplate, jti)
 	err := iredis.GetRDB().Set(context.Background(),
@@ -43,7 +43,7 @@ func IsRefreshTokenValid(jti string) (string, error) {
 	return storedUsername, err
 }
 
-// 设置 accessToken jti 阻止登录
+// 设置 accessToken jti 阻止登录.
 func InvalidateAccessToken(jti string, expiration time.Duration) error {
 	redisKey := fmt.Sprintf(BlockListKeyTemplate, jti)
 	err := iredis.GetRDB().Set(context.Background(), redisKey, "1", expiration).Err()
@@ -53,10 +53,11 @@ func InvalidateAccessToken(jti string, expiration time.Duration) error {
 func InvalidateRefreshToken(jti string) error {
 	redisKey := fmt.Sprintf(RefreshTokenKeyTemplate, jti)
 	size, err := iredis.GetRDB().Del(context.Background(), redisKey).Result()
+	if err != nil {
+		return err
+	}
 	if size > 0 {
 		return nil
-	} else {
-		err = errors.New("Key 不存在")
 	}
-	return err
+	return errors.New("key 不存在")
 }

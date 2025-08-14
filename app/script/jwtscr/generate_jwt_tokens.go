@@ -26,11 +26,9 @@ func init() {
 	pflag.IntVarP(&refExpire, "refresh token expire", "f", 10, "refresh token 过期时间, 单位 s")
 	pflag.StringVarP(&u.Username, "username", "u", "username", "refresh token 过期时间, 单位 s")
 	pflag.StringSliceVarP(&u.Roles, "roles", "r", []string{"admin", "user"}, "refresh token 过期时间, 单位 s")
-
 }
 
 func main() {
-
 	pflag.Parse()
 	slog.Info("", slog.Int("expire", expire))
 	slog.Info("", slog.Int("refresh token expire", expire))

@@ -1,4 +1,3 @@
-
 // @title           蝴蝶识别系统 API
 // @version         1.0
 // @description     这是一个使用 Go, Gin, Gocv 和 MongoDB 构建的蝴蝶识别系统的服务端 API 文档。
@@ -33,7 +32,6 @@ import (
 
 	"github.com/HunDun0Ben/bs_server/app/api"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
-
 	mcli "github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
 )
 
@@ -59,9 +57,8 @@ func startServer() {
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			panic("Failed to start server: " + err.Error())
-		} else {
-			slog.Info("Server started.", "address", server.Addr)
 		}
+		slog.Info("Server started.", "address", server.Addr)
 	}()
 
 	// 优雅关闭服务器
