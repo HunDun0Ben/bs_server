@@ -3,6 +3,7 @@ package imongo
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -12,61 +13,57 @@ import (
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
 )
 
-type MongoClient struct {
-	client *mongo.Client
-	// 保证只初始化一次
-	once sync.Once
-}
-
 var (
-	instance *MongoClient
-	mu       sync.Mutex
+	client *mongo.Client
+	once   sync.Once
 )
 
-func Client() *MongoClient {
-	if instance == nil {
-		mu.Lock()
-		defer mu.Unlock()
-		if instance == nil {
-			instance = &MongoClient{}
-			instance.Init()
-		}
-	}
-	return instance
-}
-
-func (m *MongoClient) Init() error {
-	var err error
-	m.once.Do(func() {
+// Client 返回 MongoDB 客户端单例。
+// 它在首次调用时进行初始化，并且是线程安全的。
+func Client() *mongo.Client {
+	once.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+
 		uri := conf.GlobalViper.GetString("mongodb.uri")
 		if uri == "" {
-			err = fmt.Errorf("MongoDB URI not configured")
-			return
+			// 当缺少关键配置时，直接 panic 是合理的，因为程序无法正常运行。
+			panic("MongoDB URI not configured")
 		}
-		cliOptions := options.Client()
-		if conf.GlobalViper.GetBool("monogdb.debug") {
+
+		cliOptions := options.Client().ApplyURI(uri)
+		if conf.GlobalViper.GetBool("mongodb.debug") {
 			cliOptions.SetLoggerOptions(options.Logger().
 				SetComponentLevel(
 					options.LogComponentCommand,
 					options.LogLevelDebug,
 				))
 		}
-		cliOptions.ApplyURI(uri)
-		m.client, err = mongo.Connect(ctx, cliOptions)
+
+		c, err := mongo.Connect(ctx, cliOptions)
+		if err != nil {
+			panic(fmt.Sprintf("failed to connect to MongoDB: %v", err))
+		}
+
+		// Ping 服务器以验证连接是否成功建立。
+		if err := c.Ping(ctx, nil); err != nil {
+			panic(fmt.Sprintf("failed to ping MongoDB: %v", err))
+		}
+
+		slog.Info("Successfully connected to MongoDB")
+		client = c
 	})
-	return err
+	return client
 }
 
 func Database(database string) *mongo.Database {
-	return Client().client.Database(database)
+	return Client().Database(database)
 }
 
 func BizDataBase() *mongo.Database {
-	return Client().client.Database(conf.GlobalViper.GetString("mongodb.biz_db"))
+	return Client().Database(conf.GlobalViper.GetString("mongodb.biz_db"))
 }
 
 func FileDatabase() *mongo.Database {
-	return Client().client.Database(conf.GlobalViper.GetString("mongodb.file_db"))
+	return Client().Database(conf.GlobalViper.GetString("mongodb.file_db"))
 }
