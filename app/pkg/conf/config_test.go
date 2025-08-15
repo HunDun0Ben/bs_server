@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/HunDun0Ben/bs_server/app/conf/confmodel"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
+	"github.com/HunDun0Ben/bs_server/app/pkg/conf/confmodel"
 )
 
 func TestLoadAllConfig(t *testing.T) {

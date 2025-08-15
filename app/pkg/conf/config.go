@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 
-	"github.com/HunDun0Ben/bs_server/app/conf/confmodel"
+	"github.com/HunDun0Ben/bs_server/app/pkg/conf/confmodel"
 )
 
 var (
@@ -29,12 +29,11 @@ func init() {
 }
 
 func loadAllConfig() {
-	var app string
-	app, ok := os.LookupEnv("GOAPP")
+	conf, ok := os.LookupEnv("APP_CONF")
 	if !ok {
-		app = "./"
+		conf = "./conf"
 	}
-	if err := loadConfigFiles(app + "/conf"); err != nil {
+	if err := loadConfigFiles(conf); err != nil {
 		panic(fmt.Errorf("加载配置文件失败: %v", err))
 	}
 }

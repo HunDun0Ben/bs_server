@@ -8,6 +8,6 @@
   },
   "go.useLanguageServer": true,
   "go.testEnvVars": {
-    "GOAPP": "${workspaceFolder}/app/"
+    "APP_CONF": "${workspaceFolder}/conf/"
   }
 }
