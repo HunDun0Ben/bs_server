@@ -37,5 +37,5 @@ func main() {
 	conf.AppConfig.JWT.Expire = time.Duration(expire * time.Now().Second())
 	atok, rftok, _, _ := bsjwt.GenerateTokenPair(u)
 	slog.Info("access token:", slog.String("", atok))
-	slog.Info("access token:", slog.String("", rftok))
+	slog.Info("refresh token:", slog.String("", rftok))
 }
