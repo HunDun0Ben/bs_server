@@ -16,7 +16,7 @@ import (
 	"unsafe"
 )
 
-// 读取CSV文件，返回二维特征矩阵和标签数组.
+// 读取CSV文件，返回 bow 矩阵和标签数组.
 func readCSV(file string) ([][]float64, []float64, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -30,7 +30,8 @@ func readCSV(file string) ([][]float64, []float64, error) {
 		return nil, nil, err
 	}
 
-	features := make([][]float64, 0, len(lines)) // 预分配容量
+	// 预分配容量到训练大小, 避免出现一直扩容.
+	features := make([][]float64, 0, len(lines))
 	labels := make([]float64, 0, len(lines))
 
 	for _, line := range lines {
@@ -72,7 +73,7 @@ func createSvmNode(feature []float64) *C.struct_svm_node {
 }
 
 func main() {
-	features, labels, err := readCSV("data.csv")
+	features, labels, err := readCSV("../script/data.csv")
 	if err != nil {
 		panic(err)
 	}
@@ -100,46 +101,97 @@ func main() {
 	prob.y = y
 	prob.x = x
 
-	nuValues := []float64{0.1, 0.3, 0.5, 0.7, 0.9}
+	CValues := []float64{0.1, 1, 10, 100, 1000}
 	gammaValues := []float64{0.01, 0.1, 1.0, 10.0}
 
-	for _, nu := range nuValues {
+	var bestModel *C.struct_svm_model
+	var bestAccuracy float64 = -1.0
+	var bestC, bestGamma float64
+
+	for _, c := range CValues {
 		for _, gamma := range gammaValues {
-			param := newSvmParameter(nu, gamma)
-			traning(&prob, param, features, labels)
+			fmt.Printf("Training with C=%.2f, gamma=%.2f\n", c, gamma)
+			param := newSvmParameter(c, gamma)
+			model := traning(&prob, param)
+			if model == nil {
+				continue
+			}
+
+			// 使用前120个样本作为验证集来评估模型
+			var correctCount int
+			for i := 0; i < 120; i++ {
+				predictedLabel := predict(model, features[i])
+				if predictedLabel == labels[i] {
+					correctCount++
+				}
+			}
+			accuracy := float64(correctCount) / 120.0
+			fmt.Printf("Accuracy: %.2f%%\n", accuracy*100)
+
+			if accuracy > bestAccuracy {
+				fmt.Println("Found new best model!")
+				// 释放之前保存的最佳模型
+				if bestModel != nil {
+					C.svm_free_and_destroy_model(&bestModel)
+				}
+				bestAccuracy = accuracy
+				bestC = c
+				bestGamma = gamma
+				bestModel = model
+			} else {
+				// 如果当前模型不是最佳模型，则立即释放它
+				C.svm_free_and_destroy_model(&model)
+			}
 		}
 	}
+
+	fmt.Printf("\nGrid search finished.\n")
+	fmt.Printf("Best C=%.2f, gamma=%.2f with accuracy=%.2f%%\n", bestC, bestGamma, bestAccuracy*100)
+
+	// // 保存最佳模型
+	// if bestModel != nil {
+	// 	modelFileName := C.CString("best_model.svm")
+	// 	defer C.free(unsafe.Pointer(modelFileName))
+	// 	if C.svm_save_model(modelFileName, bestModel) != 0 {
+	// 		fmt.Println("Failed to save model")
+	// 	} else {
+	// 		fmt.Println("Best model saved to best_model.svm")
+	// 	}
+	// 	C.svm_free_and_destroy_model(&bestModel)
+	// }
 }
 
-func traning(prob *C.struct_svm_problem, param *C.struct_svm_parameter, features [][]float64, labels []float64) {
+func predict(model *C.struct_svm_model, feature []float64) float64 {
+	// 1. 为待预测样本创建 svm_node
+	node := createSvmNode(feature)
+	defer C.free(unsafe.Pointer(node)) // 关键：确保释放内存
+
+	// 2. 执行预测
+	predictedLabel := C.svm_predict(model, node)
+
+	return float64(predictedLabel)
+}
+
+func traning(prob *C.struct_svm_problem, param *C.struct_svm_parameter) *C.struct_svm_model {
 	// 检查参数有效性
 	errStr := C.svm_check_parameter(prob, param)
 	if errStr != nil {
 		fmt.Println("参数错误:", C.GoString(errStr))
-		return
+		return nil
 	}
 	// 训练模型
 	model := C.svm_train(prob, param)
-	defer C.svm_free_and_destroy_model(&model) //nolint:gocritic
-	var ct int
-	for i := 0; i < 120; i++ {
-		testNode := createSvmNode(features[0+i])
-		pred := C.svm_predict(model, testNode)
-		if float64(pred) == labels[0+i] {
-			ct++
-		}
-	}
-	fmt.Printf("样本预测类别: %d", ct)
+	fmt.Println("Training finished.")
+	return model
 }
 
 // 伪代码，示范参数结构体初始化.
-func newSvmParameter(nu, gamma float64) *C.struct_svm_parameter {
+func newSvmParameter(c, gamma float64) *C.struct_svm_parameter {
 	var param C.struct_svm_parameter
 	param.svm_type = C.C_SVC
 	param.kernel_type = 2
-	param.nu = C.double(nu)
 	param.gamma = C.double(gamma)
-	param.C = 1
+	param.C = C.double(c)
 	param.cache_size = 100
 	param.eps = 0.001
 	param.shrinking = 1
