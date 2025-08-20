@@ -1,3 +1,4 @@
+```text
 ├── app                               # 应用主目录
 │   ├── api                           # 路由入口层
 │   ├── conf                          # 配置及配置模型
@@ -19,5 +20,7 @@
 │   ├── script                        # 脚本与初始化数据
 │   └── test                          # 测试相关代码（预留）
 ├── dockerfile                        # Docker 镜像构建脚本
-├── go.mod                            
-└── go.sum                            
+├── go.mod
+└── go.sum
+
+```

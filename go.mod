@@ -2,7 +2,8 @@ module github.com/HunDun0Ben/bs_server
 
 replace github.com/HunDun0Ben/bs_server => ../bs_server
 
-go 1.23.8
+// 不支持声明小版本, 小版本会被忽略
+go 1.24
 
 toolchain go1.24.3
 
@@ -12,18 +13,16 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/spf13/afero v1.14.0 // 文件系统操作
+	github.com/spf13/pflag v1.0.7 // 命令行参数解析
 	github.com/spf13/viper v1.20.1 // 配置文件操作
-	github.com/xuri/excelize/v2 v2.9.1 // excel 操作
-	go.mongodb.org/mongo-driver v1.17.4
-	gocv.io/x/gocv v0.41.0 // opencv
-)
-
-require (
-	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.10.0
+	// swagger 相关的包
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
+	github.com/xuri/excelize/v2 v2.9.1 // excel 操作
+	go.mongodb.org/mongo-driver v1.17.4
+	gocv.io/x/gocv v0.41.0 // opencv
 )
 
 require (

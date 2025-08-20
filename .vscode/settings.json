@@ -9,5 +9,6 @@
   "go.useLanguageServer": true,
   "go.testEnvVars": {
     "APP_CONF": "${workspaceFolder}/conf/"
-  }
+  },
+  "go.testTimeout": "1200s"
 }

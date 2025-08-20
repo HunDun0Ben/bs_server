@@ -19,6 +19,18 @@
       "name": "Debug Current File ",
       "type": "go",
       "request": "launch",
+      "mode": "debug",
+      "env": {
+        "LD_LIBRARY_PATH": "/home/ben/workspace/go_wks/libsvm:${env:LD_LIBRARY_PATH}",
+        "APP_CONF": "${workspaceFolder}/conf/" // 设置当前相对于工作空间的应用路径
+      },
+      "program": "${fileDirname}",
+      "args": []
+    },
+    {
+      "name": "Test Current File ",
+      "type": "go",
+      "request": "launch",
       "mode": "test",
       "env": {
         "LD_LIBRARY_PATH": "/home/ben/workspace/go_wks/libsvm:${env:LD_LIBRARY_PATH}",
