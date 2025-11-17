@@ -1,8 +1,8 @@
 package main
 
 /*
-#cgo CFLAGS: -I/home/ben/workspace/go_wks/libsvm
-#cgo LDFLAGS: -L/home/ben/workspace/go_wks/libsvm -lsvm
+#cgo CFLAGS: -I/home/ben/workspace/go-wks/libsvm
+#cgo LDFLAGS: -L/home/ben/workspace/go-wks/libsvm -lsvm
 #include <stdlib.h>
 #include "svm.h"
 */

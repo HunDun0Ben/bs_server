@@ -49,7 +49,7 @@ func (s *butterflyTypeSvc) InitAll(ctx context.Context, list []insect.Insect) er
 		return errors.New("数据表已存在数据，无法初始化")
 	}
 
-	docs := make([]interface{}, len(list))
+	docs := make([]any, len(list))
 	for i, v := range list {
 		docs[i] = v
 	}
