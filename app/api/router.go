@@ -5,6 +5,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+
 	_ "github.com/HunDun0Ben/bs_server/app/docs" // swagger docs
 	"github.com/HunDun0Ben/bs_server/app/internal/handler"
 	"github.com/HunDun0Ben/bs_server/app/middleware"
@@ -12,6 +14,8 @@ import (
 )
 
 func InitRoute(engine *gin.Engine) {
+	engine.Use(otelgin.Middleware("bs_server"))
+
 	// 自定义处理 404 请求
 	engine.NoRoute(middleware.NoRouteHandler())
 

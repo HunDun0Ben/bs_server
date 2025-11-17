@@ -9,6 +9,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
 )
@@ -31,7 +32,7 @@ func Client() *mongo.Client {
 			panic("MongoDB URI not configured")
 		}
 
-		cliOptions := options.Client().ApplyURI(uri)
+		cliOptions := options.Client().ApplyURI(uri).SetMonitor(otelmongo.NewMonitor())
 		if conf.GlobalViper.GetBool("mongodb.debug") {
 			cliOptions.SetLoggerOptions(options.Logger().
 				SetComponentLevel(
