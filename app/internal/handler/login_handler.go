@@ -27,7 +27,7 @@ import (
 // @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
 // @Failure      401  {object}  dto.SwaggerResponse "用户名或密码错误"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
-// @Router       /login [get]
+// @Router       /login [post]
 func Login(cxt *gin.Context) {
 	var req dto.LoginRequest
 

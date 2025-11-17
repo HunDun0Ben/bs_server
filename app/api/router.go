@@ -26,7 +26,7 @@ func InitRoute(engine *gin.Engine) {
 	// 公开路由
 	{
 		public := apiV1.Group("/")
-		public.GET("/login", handler.Login)
+		public.POST("/login", handler.Login)
 		public.GET("/token/refresh", handler.RefreshToken)
 	}
 	// 测试一些内容
@@ -53,5 +53,8 @@ func InitRoute(engine *gin.Engine) {
 		user.GET("/getImgResult", handler.GetImgResult)
 		user.GET("/insect", handler.InsectInfo)
 		user.GET("/butterfly_type_info", handler.ButterflyInfo)
+		user.GET("/mfa/setup/totp", handler.SetupTotp)
+		user.GET("/mfa/verify/totp", handler.VerifyTotp)
+
 	}
 }
