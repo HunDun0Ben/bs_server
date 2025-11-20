@@ -26,18 +26,21 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// GenerateTokenPair 生成 Access Token 和 Refresh Token.
-func GenerateTokenPair(user user.User) (accessTokenStr, refreshTokenStr string, claims *Claims, err error) {
-	accessToken, err := GenerateAccessToken(user.Username, user.Roles)
-	if err != nil {
-		return "", "", nil, err
+// GenerateAccessToken 只生成 Access Token.
+func GenerateAccessToken(username string, roles []string) (string, error) {
+	claims := Claims{
+		username,
+		roles,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AppConfig.JWT.Expire)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Subject:   "access_token",
+			ID:        uuid.NewString(),
+		},
 	}
-
-	refreshToken, claims, err := GenerateRefreshToken()
-	if err != nil {
-		return "", "", nil, err
-	}
-	return accessToken, refreshToken, claims, nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(conf.AppConfig.JWT.Secret))
 }
 
 // GenerateRefreshToken 只生成 Refresh Token，不包含任何用户信息.
@@ -60,21 +63,18 @@ func GenerateRefreshToken() (string, *Claims, error) {
 	return refreshTokenString, refreshClaims, err
 }
 
-// GenerateAccessToken 只生成 Access Token.
-func GenerateAccessToken(username string, roles []string) (string, error) {
-	claims := Claims{
-		username,
-		roles,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AppConfig.JWT.Expire)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Subject:   "access_token",
-			ID:        uuid.NewString(),
-		},
+// GenerateTokenPair 生成 Access Token 和 Refresh Token.
+func GenerateTokenPair(user user.User) (accessTokenStr, refreshTokenStr string, claims *Claims, err error) {
+	accessToken, err := GenerateAccessToken(user.Username, user.Roles)
+	if err != nil {
+		return "", "", nil, err
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(conf.AppConfig.JWT.Secret))
+
+	refreshToken, claims, err := GenerateRefreshToken()
+	if err != nil {
+		return "", "", nil, err
+	}
+	return accessToken, refreshToken, claims, nil
 }
 
 // ParseToken 解析 JWT token.
@@ -88,7 +88,7 @@ func ParseToken(tokenString string) (*Claims, error) {
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
-	return nil, errors.New("token is invalid")
+	return nil, errors.New("无效的Token")
 }
 
 // parseTokenByHeader 从请求头中解析和验证 JWT.

@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"

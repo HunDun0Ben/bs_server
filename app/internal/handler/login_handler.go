@@ -16,6 +16,8 @@ import (
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
 )
 
+var userService = usersvc.NewUserService()
+
 // Login godoc
 // @Summary      用户登录
 // @Description  用户使用用户名和密码进行登录，成功后返回 JWT Token。
@@ -36,25 +38,26 @@ func Login(cxt *gin.Context) {
 		return
 	}
 	// 查看用户信息
-	user, err := usersvc.NewUserService().FindByLogin(cxt, req.Username, req.Password)
+	user, err := userService.FindByLogin(cxt, req.Username, req.Password)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
+
 		return
 	}
-	// 生成对应 access and refresh token
 	accessTokenStr, refreshTokenStr, claims, err := bsjwt.GenerateTokenPair(*user)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
 		return
 	}
+	// 存储 refresh token 到 redis 中.
 	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
 	if err != nil {
 		slog.Error("存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
 		return
 	}
-
-	cxt.SetCookie("refreshToken", refreshTokenStr, int(time.Until(claims.ExpiresAt.Time).Seconds()), "/api/token/refresh", "", true, true)
+	maxAge := int(time.Until(claims.ExpiresAt.Time).Seconds())
+	cxt.SetCookie("refreshToken", refreshTokenStr, maxAge, "/api/token/refresh", "", true, true)
 	helper.Success(cxt, dto.LoginResponse{
 		AccessToken: accessTokenStr,
 	})
@@ -104,7 +107,7 @@ func RefreshToken(cxt *gin.Context) {
 	}
 
 	// 查找用户信息
-	user, err := usersvc.NewUserService().FindByUsername(cxt, storedUsername)
+	user, err := userService.FindByUsername(cxt, storedUsername)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
 		return

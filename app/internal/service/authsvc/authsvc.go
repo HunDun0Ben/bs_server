@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	BlockListKeyTemplate    = "blacklist_jti:%s"
+	BlockedListKeyTemplate  = "blockedList_jti:%s"
 	RefreshTokenKeyTemplate = "refresh_token:%s"
 )
 
@@ -26,8 +26,8 @@ func StoreRefreshToken(jti, username string, expiration time.Duration) error {
 	return err
 }
 
-func IsAcccessTokenValid(jti string) (bool, error) {
-	redisKey := fmt.Sprintf(BlockListKeyTemplate, jti)
+func IsAccessTokenValid(jti string) (bool, error) {
+	redisKey := fmt.Sprintf(BlockedListKeyTemplate, jti)
 	err := iredis.GetRDB().Get(context.Background(), redisKey).Err()
 	if errors.Is(err, redis.Nil) {
 		return true, nil
@@ -45,7 +45,7 @@ func IsRefreshTokenValid(jti string) (string, error) {
 
 // 设置 accessToken jti 阻止登录.
 func InvalidateAccessToken(jti string, expiration time.Duration) error {
-	redisKey := fmt.Sprintf(BlockListKeyTemplate, jti)
+	redisKey := fmt.Sprintf(BlockedListKeyTemplate, jti)
 	err := iredis.GetRDB().Set(context.Background(), redisKey, "1", expiration).Err()
 	return err
 }
