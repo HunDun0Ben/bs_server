@@ -35,11 +35,12 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 
 	"github.com/HunDun0Ben/bs_server/app/api"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
+
 	mcli "github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
 func main() {

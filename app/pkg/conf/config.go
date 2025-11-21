@@ -13,16 +13,21 @@ import (
 )
 
 var (
-	GlobalViper *viper.Viper            = viper.New()
+	GlobalViper *viper.Viper            = viper.GetViper() // 自动初始化的全局 viper.v 实例
 	AppViperMap map[string]*viper.Viper = make(map[string]*viper.Viper)
 	AppConfig   confmodel.AppConfig
-
-	fs afero.Fs = afero.NewOsFs()
+	fs          afero.Fs = afero.NewOsFs()
 )
 
 // 初始化全局配置.
 func init() {
-	// 启用环境变量支持覆盖配置文件
+	LoadConfig()
+}
+
+// LoadConfig 加载所有配置.
+// 在测试中可以被调用以重新加载配置.
+func LoadConfig() {
+	// 启用环境变量支持覆盖配置文件.
 	GlobalViper.AutomaticEnv()
 	loadAllConfig()
 	GlobalViper.Unmarshal(&AppConfig)
@@ -31,6 +36,7 @@ func init() {
 func loadAllConfig() {
 	conf, ok := os.LookupEnv("APP_CONF")
 	if !ok {
+		// 配置文件默认位置
 		conf = "./conf"
 	}
 	if err := loadConfigFiles(conf); err != nil {
@@ -50,24 +56,26 @@ func loadConfigFiles(dir string) error {
 			// 只处理 YAML 文件
 			if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" {
 				// 获取文件名作为 viper 的命名空间
-				configName := strings.Split(info.Name(), ".")[0]
+				cfgNamespace := strings.Split(info.Name(), ".")[0]
 				// 根据每一个 yaml 文件, 创建一个对应的 viper 实例
 				v := viper.New()
 				// 设置文件路径并读取配置
-				v.SetConfigFile(configName)
-				v.SetConfigName(configName)
+				// v.SetConfigFile(configName)
+
 				// 默认加载 conf 目录下的配置文件
 				v.AddConfigPath(filepath.Join(dir, "conf"))
 				v.AddConfigPath(dir)
+				v.SetConfigName(cfgNamespace)
 				v.SetConfigType("yaml")
 				if err := v.ReadInConfig(); err != nil {
 					return fmt.Errorf("读取配置文件 %s 错误: %v", path, err)
 				}
-				AppViperMap[configName] = v
+				AppViperMap[cfgNamespace] = v
 				// 将此 viper 实例中的配置合并到全局配置中
 				// 这里我们使用 Set() 方法将不同的配置内容按照文件名作为键值存储
 				GlobalViper.MergeConfigMap(v.AllSettings())
 			}
+			// todo: 缺少考虑了不同配置文件是否有重复的配置信息.
 			return nil
 		})
 	return err

@@ -25,7 +25,7 @@ SWAGGER_OUTPUT_DIR := app/docs/swagger
 # ==============================================================================
 
 # .PHONY 告诉 make, 这些目标不是真实的文件名
-.PHONY: all build tools swagger clean help
+.PHONY: all build tools swagger clean help format
 
 # 默认目标：构建所有内容
 all: build tools swagger ## Build main app, tools, and generate docs
@@ -41,6 +41,10 @@ swagger: ## Generate Swagger/OpenAPI documentation
 	@echo "📜 Generating Swagger docs..."
 	swag init -g $(SWAGGER_MAIN_FILE) --output $(SWAGGER_OUTPUT_DIR)
 
+format: ## Format Go files using gci
+	@echo "🎨 Formatting Go files..."
+	gci write --section standard --section default --section "prefix(github.com/HunDun0Ben/bs_server)" --section alias --section blank --section dot .
+
 # 清理所有生成的文件
 clean: ## Clean up all generated files
 	@echo "🧹 Cleaning up..."
@@ -48,7 +52,7 @@ clean: ## Clean up all generated files
 	rm -f $(SWAGGER_OUTPUT_DIR)/swagger.* $(SWAGGER_OUTPUT_DIR)/docs.go
 
 # 显示帮助信息
-help: 
+help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "Targets:"

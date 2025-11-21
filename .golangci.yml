@@ -6,25 +6,6 @@ run:
     - third_party # 其他外部库目录（根据项目结构自定义）
     - external # 另一种外部代码存放目录
 
-linters-settings:
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/HunDun0Ben/bs_server)
-  gocritic:
-    # Enable multiple checks by tags. See "Tags" section in https://github.com/go-critic/go-critic#usage.
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - style
-    disabled-checks:
-      - importShadow
-      - unnamedResult
-  goimports:
-    local-prefixes: github.com/HunDun0Ben/bs_server
-
 linters:
   disable-all: true
   enable:
@@ -65,46 +46,30 @@ linters:
     - wastedassign
     - whitespace
 
-    # fixme
-    # - cyclop
-    # - errcheck
-    # - errorlint
-    # - exhaustivestruct
-    # - forbidigo
-    # - forcetypeassert
-    # - gochecknoglobals
-    # - gochecknoinits
-    # - gocognit
-    # - goconst
-    # - gocyclo
-    # - gosec
-    # - gosimple
-    # - ifshort
-    # - lll
-    # - nlreturn
-    # - paralleltest
-    # - scopelint
-    # - thelper
-    # - wrapcheck
-
-    # unused
-    # - depguard
-    # - goheader
-    # - gomodguard
-
-    # deprecated
-    # - deadcode
-    # - structcheck
-    # - varcheck
-
-    # don't enable:
-    # - asciicheck
-    # - funlen
-    # - godox
-    # - goerr113
-    # - gomnd
-    # - interfacer
-    # - maligned
-    # - nestif
-    # - testpackage
-    # - wsl
+formatters:
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/HunDun0Ben/bs_server)
+        - blank
+        - dot
+        - alias
+      # 避免 import 之间出现注释，保持机器可读
+      no-inline-comments: true
+      no-prefix-comments: true
+      # 按 sections 定义顺序排序
+      custom-order: true
+      # 推荐开启字母排序，使团队协作 diff 更少
+      no-lex-order: false
+    gocritic:
+      # Enable multiple checks by tags. See "Tags" section in https://github.com/go-critic/go-critic#usage.
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - style
+      disabled-checks:
+        - importShadow
+        - unnamedResult

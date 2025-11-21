@@ -23,7 +23,7 @@ require (
 	github.com/swaggo/swag v1.16.4
 	github.com/xuri/excelize/v2 v2.9.1 // excel 操作
 	go.mongodb.org/mongo-driver v1.17.4
-	gocv.io/x/gocv v0.41.0 // opencv
+	gocv.io/x/gocv v0.42.0 // opencv
 )
 
 require (
@@ -32,6 +32,7 @@ require (
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 	go.opentelemetry.io/otel/sdk v1.38.0
+	golang.org/x/sys v0.35.0
 )
 
 require (
@@ -97,7 +98,6 @@ require (
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/tools v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect

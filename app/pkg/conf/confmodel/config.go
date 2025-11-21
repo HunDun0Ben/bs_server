@@ -3,19 +3,19 @@ package confmodel
 import "time"
 
 type ServerConfig struct {
-	Name string
-	Port int
+	Name string // 服务器名称
+	Port int    // 服务器端口
 }
 
 type LogConfig struct {
-	Level string
+	Level string // 日志级别
 }
 
 type JWTConfig struct {
-	Enable        bool
-	Secret        string
-	Expire        time.Duration
-	RefreshExpire time.Duration
+	Enable        bool          // 是否启用 JWT
+	Secret        string        // 密钥
+	Expire        time.Duration // 过期时间
+	RefreshExpire time.Duration // 刷新过期时间
 }
 
 type AppConfig struct {
