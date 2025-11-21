@@ -56,7 +56,7 @@ The project utilizes a `Makefile` for streamlined development tasks.
 *   **`make all`**: Builds the main application, all Go script tools, and generates Swagger documentation. This is the recommended command for a full setup.
 *   **`make build`**: Compiles the main application (`app/main.go`) and places the executable at `scripts/bin/bs_server`.
 *   **`make tools`**: Compiles various utility scripts (e.g., JWT token generation tool) and places them in `scripts/bin/`.
-*   **`make swagger`**: Generates API documentation based on Swagger annotations in `app/main.go`. The output will be in `app/docs`.
+*   **`make swagger`**: Generates API documentation based on Swagger annotations in `app/main.go`. The output will be in `app/docs/swagger`.
 *   **`make clean`**: Removes all generated build artifacts and documentation files.
 *   **`make help`**: Displays a list of available `Makefile` targets and their descriptions.
 

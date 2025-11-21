@@ -18,7 +18,7 @@ JWT_TOOL_TARGET := $(BIN_DIR)/generate_jwt_tokens
 
 # Swagger
 SWAGGER_MAIN_FILE  := app/main.go
-SWAGGER_OUTPUT_DIR := app/docs
+SWAGGER_OUTPUT_DIR := app/docs/swagger
 
 # ==============================================================================
 # Main Targets

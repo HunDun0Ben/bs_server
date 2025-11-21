@@ -134,7 +134,7 @@ swag init
 此命令会：
 1.  扫描项目中的所有 `.go` 文件（特别是 `main.go` 和 handler 文件）的注释。
 2.  在 `app/` 目录下创建一个 `docs` 子目录。
-3.  在 `app/docs/` 中生成 `docs.go`, `swagger.json`, 和 `swagger.yaml` 三个文件。`docs.go` 包含了生成的文档内容，以便编译到你的应用中。
+3.  在 `app/docs/swagger/` 中生成 `docs.go`, `swagger.json`, 和 `swagger.yaml` 三个文件。`docs.go` 包含了生成的文档内容，以便编译到你的应用中。
 
 **注意**: 每次修改了 API 注释后，都需要重新运行 `swag init` 来更新文档。
 
@@ -150,7 +150,7 @@ import (
     swaggerFiles "github.com/swaggo/files"
     ginSwagger "github.com/swaggo/gin-swagger"
 
-    _ "github.com/HunDun0Ben/bs_server/app/docs" // 重要：导入 swag 生成的 docs 包
+    _ "github.com/HunDun0Ben/bs_server/app/docs/swagger" // 重要：导入 swag 生成的 docs 包
     "github.com/HunDun0Ben/bs_server/app/internal/handler"
 )
 
@@ -178,7 +178,7 @@ func InitRouter() *gin.Engine {
 }
 ```
 **关键点**:
-- `import _ "github.com/HunDun0Ben/bs_server/app/docs"`: 这一行**必须**添加。它通过匿名导入的方式，将 `swag init` 生成的文档信息注册到程序中。
+- `import _ "github.com/HunDun0Ben/bs_server/app/docs/swagger/"`: 这一行**必须**添加。它通过匿名导入的方式，将 `swag init` 生成的文档信息注册到程序中。
 - `r.GET("/swagger/*any", ...)`: 这行代码注册了一个路由，所有 `/swagger/` 前缀的请求都会被 `gin-swagger` 中间件处理，从而展示 Swagger UI 界面。
 
 ---
@@ -215,7 +215,7 @@ run: swag
 
 # 生成 swagger 文档
 swag:
-	swag init -g app/main.go --output app/docs
+	swag init -g app/main.go --output app/docs/swagger
 
 # ... 其他命令
 ```

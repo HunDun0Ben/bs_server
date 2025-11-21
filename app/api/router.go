@@ -6,7 +6,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
-	_ "github.com/HunDun0Ben/bs_server/app/docs" // swagger docs
+	_ "github.com/HunDun0Ben/bs_server/app/docs/swagger" // swagger docs
 	"github.com/HunDun0Ben/bs_server/app/internal/handler"
 	"github.com/HunDun0Ben/bs_server/app/middleware"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
