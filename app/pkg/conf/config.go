@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 
-	"github.com/HunDun0Ben/bs_server/app/pkg/conf/confmodel"
+	confmodel "github.com/HunDun0Ben/bs_server/app/pkg/conf/model"
 )
 
 var (
@@ -21,13 +21,7 @@ var (
 
 // 初始化全局配置.
 func init() {
-	LoadConfig()
-}
-
-// LoadConfig 加载所有配置.
-// 在测试中可以被调用以重新加载配置.
-func LoadConfig() {
-	// 启用环境变量支持覆盖配置文件.
+	// 启用环境变量支持覆盖配置文件
 	GlobalViper.AutomaticEnv()
 	loadAllConfig()
 	GlobalViper.Unmarshal(&AppConfig)

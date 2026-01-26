@@ -21,6 +21,18 @@ import (
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
 )
 
+// UploadImg godoc
+// @Summary      上传图片
+// @Description  上传图片文件到服务器
+// @Tags         UserController
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "要上传的图片文件"
+// @Success      200  {object}  dto.SwaggerResponse{data=map[string]interface{}} "成功响应，返回文件ID和文件名"
+// @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /user/uploadImg [post]
+// @Security     BearerAuth
 func UploadImg(cxt *gin.Context) {
 	file, header, err := cxt.Request.FormFile("file")
 	if err != nil {
@@ -49,6 +61,22 @@ func UploadImg(cxt *gin.Context) {
 	})
 }
 
+// GetImgResult godoc
+// @Summary      获取图片处理结果
+// @Description  根据图片ID获取图片处理的结果
+// @Tags         UserController
+// @Accept       json
+// @Produce      json
+// @Param        PreProWay  query  []int  false  "预处理方式数组"
+// @Param        Feature    query  int    false  "特征类型"
+// @Param        Classifier query  int    false  "分类器类型"
+// @Param        ImgID      query  string true   "图片ID"
+// @Success      200  {object}  dto.SwaggerResponse{data=map[string]interface{}} "成功响应，返回图片处理结果"
+// @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
+// @Failure      404  {object}  dto.SwaggerResponse "图片未找到"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /user/getImgResult [get]
+// @Security     BearerAuth
 func GetImgResult(cxt *gin.Context) {
 	var req dto.GetImgResultReq
 	if err := cxt.ShouldBindQuery(&req); err != nil {
@@ -72,9 +100,30 @@ func GetImgResult(cxt *gin.Context) {
 	})
 }
 
+// InsectInfo godoc
+// @Summary      获取昆虫信息
+// @Description  获取昆虫的详细信息（待实现）
+// @Tags         UserController
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  dto.SwaggerResponse "成功响应"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /user/insect [get]
+// @Security     BearerAuth
 func InsectInfo(cxt *gin.Context) {
 }
 
+// ButterflyInfo godoc
+// @Summary      获取蝴蝶种类信息
+// @Description  获取所有蝴蝶种类的详细信息列表
+// @Tags         UserController
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Success      200  {object}  dto.SwaggerResponse{data=[]insect.Insect} "成功响应，返回蝴蝶种类信息列表"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /user/butterfly_type_info [get]
+// @Security     BearerAuth
 func ButterflyInfo(cxt *gin.Context) {
 	insect_list, err := butterflysvc.NewButterflyTypeSvc().GetAllList(cxt.Request.Context())
 	if err != nil {
@@ -124,8 +173,12 @@ func SetupTotp(cxt *gin.Context) {
 		return
 	}
 
-	// TODO: 将TOTP密钥和恢复码保存到数据库
-	// 注意：实际使用时应该先保存为pending状态，等用户验证第一个TOTP码成功后再激活
+	// 将TOTP密钥保存到数据库 (此时 mfaEnabled 为 false)
+	err = mfaService.SaveMFASecret(cxt.Request.Context(), username, key.Secret())
+	if err != nil {
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "保存MFA配置失败", nil, err))
+		return
+	}
 
 	// 返回设置信息
 	// Generate QR code image
@@ -158,7 +211,7 @@ func SetupTotp(cxt *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        verify body dto.TOTPVerifyReq true "TOTP验证码"
-// @Success      200  {object}  dto.TOTPVerifyRes "验证成功响应"
+// @Success      200  {object}  dto.SwaggerResponse{data=dto.TOTPVerifyRes} "验证成功响应"
 // @Failure      400  {object}  dto.SwaggerResponse "请求参数错误"
 // @Failure      401  {object}  dto.SwaggerResponse "未授权的访问"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
@@ -183,14 +236,14 @@ func VerifyTotp(cxt *gin.Context) {
 	mfaService := authsvc.NewMFAService()
 
 	// 获取用户的TOTP secret
-	secret, err := mfaService.GetUserMFASecret(username)
+	secret, err := mfaService.GetUserMFASecret(cxt.Request.Context(), username)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "获取MFA配置失败", nil, err))
 		return
 	}
 
 	// 验证TOTP码并激活MFA
-	err = mfaService.VerifyAndActivateMFA(username, secret, req.Code)
+	err = mfaService.VerifyAndActivateMFA(cxt.Request.Context(), username, secret, req.Code)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "TOTP验证失败", nil, err))
 		return

@@ -11,6 +11,9 @@ type User struct {
 	Password    string    `bson:"password" json:"-"`
 	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
 	LastLoginAt time.Time `bson:"lastLoginAt" json:"lastLoginAt"`
-	IsActive    bool      `bson:"isActive" json:"isActive"`
-	Roles       []string  `bson:"roles" json:"roles"`
+	IsActive      bool      `bson:"isActive" json:"isActive"`
+	Roles         []string  `bson:"roles" json:"roles"`
+	MFASecret     string    `bson:"mfaSecret,omitempty" json:"-"`
+	MFAEnabled    bool      `bson:"mfaEnabled" json:"mfaEnabled"`
+	RecoveryCodes []string  `bson:"recoveryCodes,omitempty" json:"-"`
 }

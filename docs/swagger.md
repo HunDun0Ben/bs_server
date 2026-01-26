@@ -109,6 +109,7 @@
         // c.JSON(http.StatusOK, model.Result{...})
     }
     ```
+
     **注解详解**:
     - `@Summary`: 接口的简短摘要。
     - `@Description`: 接口的详细描述。
@@ -132,6 +133,7 @@ swag init
 ```
 
 此命令会：
+
 1.  扫描项目中的所有 `.go` 文件（特别是 `main.go` 和 handler 文件）的注释。
 2.  在 `app/` 目录下创建一个 `docs` 子目录。
 3.  在 `app/docs/swagger/` 中生成 `docs.go`, `swagger.json`, 和 `swagger.yaml` 三个文件。`docs.go` 包含了生成的文档内容，以便编译到你的应用中。
@@ -177,7 +179,9 @@ func InitRouter() *gin.Engine {
     return r
 }
 ```
+
 **关键点**:
+
 - `import _ "github.com/HunDun0Ben/bs_server/app/docs/swagger/"`: 这一行**必须**添加。它通过匿名导入的方式，将 `swag init` 生成的文档信息注册到程序中。
 - `r.GET("/swagger/*any", ...)`: 这行代码注册了一个路由，所有 `/swagger/` 前缀的请求都会被 `gin-swagger` 中间件处理，从而展示 Swagger UI 界面。
 
@@ -201,6 +205,7 @@ func InitRouter() *gin.Engine {
 ## 自动化建议
 
 为了避免忘记运行 `swag init`，建议将其集成到你的开发流程中，例如：
+
 - 创建一个 `Makefile`。
 - 使用 `git pre-commit hook` 在提交前自动执行。
 
@@ -219,4 +224,5 @@ swag:
 
 # ... 其他命令
 ```
+
 这样，每次执行 `make run` 时，都会先自动更新 Swagger 文d档，再启动应用。

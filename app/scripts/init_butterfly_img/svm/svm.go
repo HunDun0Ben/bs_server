@@ -11,8 +11,10 @@ import "C"
 import (
 	"encoding/csv"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
+	"time"
 	"unsafe"
 )
 
@@ -58,6 +60,48 @@ func readCSV(file string) ([][]float64, []float64, error) {
 	return features, labels, nil
 }
 
+// MinMaxScaling performs min-max scaling on features to range [0, 1]
+func MinMaxScaling(features [][]float64) ([][]float64, []float64, []float64) {
+	if len(features) == 0 {
+		return features, nil, nil
+	}
+	dim := len(features[0])
+	minVals := make([]float64, dim)
+	maxVals := make([]float64, dim)
+
+	// Initialize min/max
+	for i := 0; i < dim; i++ {
+		minVals[i] = features[0][i]
+		maxVals[i] = features[0][i]
+	}
+
+	// Find min/max
+	for _, feat := range features {
+		for i, v := range feat {
+			if v < minVals[i] {
+				minVals[i] = v
+			}
+			if v > maxVals[i] {
+				maxVals[i] = v
+			}
+		}
+	}
+
+	// Scale
+	scaled := make([][]float64, len(features))
+	for i, feat := range features {
+		scaled[i] = make([]float64, dim)
+		for j, v := range feat {
+			if maxVals[j] == minVals[j] {
+				scaled[i][j] = 0
+			} else {
+				scaled[i][j] = (v - minVals[j]) / (maxVals[j] - minVals[j])
+			}
+		}
+	}
+	return scaled, minVals, maxVals
+}
+
 // 创建 libsvm 的 svm_node 数组，末尾 index=0 作为结束标志.
 func createSvmNode(feature []float64) *C.struct_svm_node {
 	n := len(feature)
@@ -73,26 +117,67 @@ func createSvmNode(feature []float64) *C.struct_svm_node {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	features, labels, err := readCSV("../script/data.csv")
 	if err != nil {
 		panic(err)
 	}
-	l := C.int(len(labels))
+
+	fmt.Printf("Loaded %d samples.\n", len(labels))
+
+	// 1. 数据归一化 (Min-Max Scaling)
+	// SVM 对数据缩放非常敏感，通常缩放到 [0,1] 或 [-1,1]
+	features, _, _ = MinMaxScaling(features)
+	fmt.Println("Data scaled to [0, 1].")
+
+	// 2. 数据打乱 (Shuffle)
+	perm := rand.Perm(len(features))
+	shuffledFeatures := make([][]float64, len(features))
+	shuffledLabels := make([]float64, len(labels))
+	for i, v := range perm {
+		shuffledFeatures[i] = features[v]
+		shuffledLabels[i] = labels[v]
+	}
+	features = shuffledFeatures
+	labels = shuffledLabels
+	fmt.Println("Data shuffled.")
+
+	// 3. 划分训练集和验证集 (80% Train, 20% Validation)
+	trainSize := int(float64(len(labels)) * 0.8)
+	trainFeatures := features[:trainSize]
+	trainLabels := labels[:trainSize]
+	valFeatures := features[trainSize:]
+	valLabels := labels[trainSize:]
+
+	fmt.Printf("Train set size: %d, Validation set size: %d\n", len(trainLabels), len(valLabels))
+
+	l := C.int(len(trainLabels))
 	// 转换标签
 	y := (*C.double)(C.malloc(C.size_t(l) * C.size_t(unsafe.Sizeof(C.double(0)))))
 	defer C.free(unsafe.Pointer(y))
 	yArr := (*[1 << 30]C.double)(unsafe.Pointer(y))[:l:l]
 	for i := 0; i < int(l); i++ {
-		yArr[i] = C.double(labels[i])
+		yArr[i] = C.double(trainLabels[i])
 	}
 
 	// 转换特征
 	x := (**C.struct_svm_node)(C.malloc(C.size_t(l) * C.size_t(unsafe.Sizeof(uintptr(0)))))
 	defer C.free(unsafe.Pointer(x))
 
+	// 用于跟踪所有分配的 svm_node，以便最后释放
+	var allocatedNodes []*C.struct_svm_node
+	defer func() {
+		for _, node := range allocatedNodes {
+			C.free(unsafe.Pointer(node))
+		}
+	}()
+
 	xArr := (*[1 << 30]*C.struct_svm_node)(unsafe.Pointer(x))[:l:l]
 	for i := 0; i < int(l); i++ {
-		xArr[i] = createSvmNode(features[i])
+		node := createSvmNode(trainFeatures[i])
+		xArr[i] = node
+		allocatedNodes = append(allocatedNodes, node)
 	}
 
 	// 构造问题结构体
@@ -110,26 +195,26 @@ func main() {
 
 	for _, c := range CValues {
 		for _, gamma := range gammaValues {
-			fmt.Printf("Training with C=%.2f, gamma=%.2f\n", c, gamma)
+			// fmt.Printf("Training with C=%.2f, gamma=%.2f... ", c, gamma)
 			param := newSvmParameter(c, gamma)
 			model := traning(&prob, param)
 			if model == nil {
 				continue
 			}
 
-			// 使用前120个样本作为验证集来评估模型
+			// 使用验证集评估模型
 			var correctCount int
-			for i := 0; i < 120; i++ {
-				predictedLabel := predict(model, features[i])
-				if predictedLabel == labels[i] {
+			for i := 0; i < len(valLabels); i++ {
+				predictedLabel := predict(model, valFeatures[i])
+				if predictedLabel == valLabels[i] {
 					correctCount++
 				}
 			}
-			accuracy := float64(correctCount) / 120.0
-			fmt.Printf("Accuracy: %.2f%%\n", accuracy*100)
+			accuracy := float64(correctCount) / float64(len(valLabels))
+			// fmt.Printf("Accuracy: %.2f%%\n", accuracy*100)
 
 			if accuracy > bestAccuracy {
-				fmt.Println("Found new best model!")
+				fmt.Printf("New best found: C=%.2f, gamma=%.2f, Acc=%.2f%%\n", c, gamma, accuracy*100)
 				// 释放之前保存的最佳模型
 				if bestModel != nil {
 					C.svm_free_and_destroy_model(&bestModel)
@@ -180,8 +265,8 @@ func traning(prob *C.struct_svm_problem, param *C.struct_svm_parameter) *C.struc
 		return nil
 	}
 	// 训练模型
+	// C.svm_train returns a pointer to a model allocated by malloc, we must free it later.
 	model := C.svm_train(prob, param)
-	fmt.Println("Training finished.")
 	return model
 }
 
@@ -189,7 +274,7 @@ func traning(prob *C.struct_svm_problem, param *C.struct_svm_parameter) *C.struc
 func newSvmParameter(c, gamma float64) *C.struct_svm_parameter {
 	var param C.struct_svm_parameter
 	param.svm_type = C.C_SVC
-	param.kernel_type = 2
+	param.kernel_type = 2 // RBF
 	param.gamma = C.double(gamma)
 	param.C = C.double(c)
 	param.cache_size = 100

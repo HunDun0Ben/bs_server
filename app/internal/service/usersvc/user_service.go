@@ -42,3 +42,36 @@ func (s *UserService) FindByUsername(ctx context.Context, username string) (*use
 	}
 	return &u, nil
 }
+
+func (s *UserService) EnableMFA(ctx context.Context, username, secret string, recoveryCodes []string) error {
+	_, err := s.col.UpdateOne(ctx, bson.M{"username": username}, bson.M{
+		"$set": bson.M{
+			"mfaSecret":     secret,
+			"mfaEnabled":    true,
+			"recoveryCodes": recoveryCodes,
+		},
+	})
+	return err
+}
+
+func (s *UserService) GetMFAInfo(ctx context.Context, username string) (string, bool, error) {
+	var u user.User
+	err := s.col.FindOne(ctx, bson.M{"username": username}, nil).Decode(&u)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+	return u.MFASecret, u.MFAEnabled, nil
+}
+
+func (s *UserService) SaveMFASecret(ctx context.Context, username, secret string) error {
+	_, err := s.col.UpdateOne(ctx, bson.M{"username": username}, bson.M{
+		"$set": bson.M{
+			"mfaSecret":  secret,
+			"mfaEnabled": false,
+		},
+	})
+	return err
+}

@@ -3,9 +3,7 @@ module github.com/HunDun0Ben/bs_server
 replace github.com/HunDun0Ben/bs_server => ../bs_server
 
 // 不支持声明小版本, 小版本会被忽略
-go 1.24
-
-toolchain go1.24.3
+go 1.25.5
 
 require (
 	github.com/gin-gonic/gin v1.10.1 // Web 框架
@@ -17,10 +15,10 @@ require (
 	github.com/spf13/pflag v1.0.7 // 命令行参数解析
 	github.com/spf13/viper v1.20.1 // 配置文件操作
 	github.com/stretchr/testify v1.11.1
-	// swagger 相关的包
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
-	github.com/swaggo/swag v1.16.4
+	// swagger 相关的包
+	github.com/swaggo/swag v1.8.12
 	github.com/xuri/excelize/v2 v2.9.1 // excel 操作
 	go.mongodb.org/mongo-driver v1.17.4
 	gocv.io/x/gocv v0.42.0 // opencv
@@ -32,7 +30,7 @@ require (
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 	go.opentelemetry.io/otel/sdk v1.38.0
-	golang.org/x/sys v0.35.0
+	golang.org/x/sys v0.36.0
 )
 
 require (
@@ -95,14 +93,14 @@ require (
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.20.0 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
-	golang.org/x/tools v0.35.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/tools v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
-	google.golang.org/grpc v1.75.0 // indirect
+	google.golang.org/grpc v1.75.1 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

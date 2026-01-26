@@ -1,6 +1,7 @@
 package authsvc
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base32"
 	"fmt"
@@ -8,12 +9,18 @@ import (
 
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
+
+	"github.com/HunDun0Ben/bs_server/app/internal/service/usersvc"
 )
 
-type MFAService struct{}
+type MFAService struct {
+	userSvc *usersvc.UserService
+}
 
 func NewMFAService() *MFAService {
-	return &MFAService{}
+	return &MFAService{
+		userSvc: usersvc.NewUserService(),
+	}
 }
 
 func (s *MFAService) GenerateTOTPSecret(username string) (*otp.Key, error) {
@@ -44,22 +51,27 @@ func (s *MFAService) ValidateTOTPCode(secret string, code string) bool {
 	return totp.Validate(code, secret)
 }
 
-func (s *MFAService) VerifyAndActivateMFA(username, secret, code string) error {
+func (s *MFAService) VerifyAndActivateMFA(ctx context.Context, username, secret, code string) error {
 	// 验证TOTP码
 	if !totp.Validate(code, secret) {
 		return fmt.Errorf("invalid TOTP code")
 	}
 
-	// TODO: 在数据库中更新用户的MFA状态为已激活
-	// 1. 更新用户的MFA secret
-	// 2. 设置MFA状态为已激活
-	// 3. 存储恢复码(如果有的话)
+	// 生成恢复码
+	recoveryCodes, err := s.GenerateRecoveryCodes()
+	if err != nil {
+		return fmt.Errorf("failed to generate recovery codes: %w", err)
+	}
 
-	return nil
+	// 激活MFA并保存恢复码
+	return s.userSvc.EnableMFA(ctx, username, secret, recoveryCodes)
 }
 
-func (s *MFAService) GetUserMFASecret(username string) (string, error) {
-	// TODO: 从数据库中获取用户的TOTP secret
-	// 如果用户未设置MFA或MFA未激活，返回错误
-	return "", nil
+func (s *MFAService) GetUserMFASecret(ctx context.Context, username string) (string, error) {
+	secret, _, err := s.userSvc.GetMFAInfo(ctx, username)
+	return secret, err
+}
+
+func (s *MFAService) SaveMFASecret(ctx context.Context, username, secret string) error {
+	return s.userSvc.SaveMFASecret(ctx, username, secret)
 }

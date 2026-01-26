@@ -39,7 +39,6 @@ func InitRoute(engine *gin.Engine) {
 		otherTest := apiV1.Group("/test")
 		otherTest.GET("/getAllProType", handler.GetProType)
 	}
-
 	// jwt 认证路由组, 需要通过 JWT 认证
 	auth := apiV1.Group("/")
 	if conf.AppConfig.JWT.Enable {
@@ -47,6 +46,11 @@ func InitRoute(engine *gin.Engine) {
 	}
 	auth.POST("/logout", handler.Logout)
 
+	// 彩票相关路由
+	{
+		lottery := auth.Group("/lottery")
+		lottery.GET("/bigLottery/random", handler.BigLotteryRandom)
+	}
 	{ // 管理路由
 		manage := auth.Group("/manage")
 		manage.GET("/initInsect", handler.InitInsect)
@@ -59,6 +63,6 @@ func InitRoute(engine *gin.Engine) {
 		user.GET("/insect", handler.InsectInfo)
 		user.GET("/butterfly_type_info", handler.ButterflyInfo)
 		user.GET("/mfa/setup/totp", handler.SetupTotp)
-		user.GET("/mfa/verify/totp", handler.VerifyTotp)
+		user.POST("/mfa/verify/totp", handler.VerifyTotp)
 	}
 }

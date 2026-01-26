@@ -8,6 +8,16 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// InitImgDB godoc
+// @Summary      初始化图像数据库
+// @Description  初始化图像数据库（待实现）
+// @Tags         ManagerController
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  dto.SwaggerResponse "成功响应"
+// @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
+// @Router       /manage/initImgDB [get]
+// @Security     BearerAuth
 func InitImgDB(cxt *gin.Context) {
 }
 
