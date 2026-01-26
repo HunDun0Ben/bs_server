@@ -54,13 +54,19 @@ func main() {
 }
 
 func initTracerProvider() func() {
+	if !conf.AppConfig.OTEL.Enable {
+		return func() {}
+	}
 	ctx := context.Background()
 
+	var opts []otlptracegrpc.Option
+	opts = append(opts, otlptracegrpc.WithEndpoint(conf.AppConfig.OTEL.Endpoint))
+	if conf.AppConfig.OTEL.Insecure {
+		opts = append(opts, otlptracegrpc.WithInsecure())
+	}
+
 	// 配置 OTLP gRPC 导出器
-	exporter, err := otlptracegrpc.New(ctx,
-		otlptracegrpc.WithInsecure(),                 // 使用非加密连接，生产环境请使用 WithTLSCredentials
-		otlptracegrpc.WithEndpoint("localhost:4317"), // OpenTelemetry Collector 默认 gRPC 端口
-	)
+	exporter, err := otlptracegrpc.New(ctx, opts...)
 	if err != nil {
 		slog.Error("Failed to create OTLP exporter", "error", err)
 		return func() {}
@@ -69,8 +75,8 @@ func initTracerProvider() func() {
 	// 配置资源信息
 	resource := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName("bs_server"),
-		semconv.ServiceVersion("1.0.0"),
+		semconv.ServiceName(conf.AppConfig.OTEL.ServiceName),
+		semconv.ServiceVersion(conf.AppConfig.OTEL.Version),
 	)
 
 	// 创建 TracerProvider

@@ -23,6 +23,7 @@ type AppConfig struct {
 	Log    LogConfig
 	JWT    JWTConfig
 	Redis  RedisConfig
+	OTEL   OTELConfig
 }
 
 // RedisConfig 定义了 Redis 的配置.
@@ -32,4 +33,12 @@ type RedisConfig struct {
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
 	PoolSize int    `mapstructure:"pool_size"`
+}
+
+type OTELConfig struct {
+	Enable      bool   `mapstructure:"enable"`
+	ServiceName string `mapstructure:"service_name"`
+	Version     string `mapstructure:"version"`
+	Endpoint    string `mapstructure:"endpoint"`
+	Insecure    bool   `mapstructure:"insecure"`
 }
