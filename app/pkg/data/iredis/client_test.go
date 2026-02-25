@@ -8,6 +8,9 @@ import (
 // TestGetRDB 测试 GetRDB 函数是否能成功返回一个可用的 Redis 客户端实例。
 // 注意：此测试需要一个正在运行的 Redis 实例，并依赖于正确的配置文件 (conf/redis.yaml)。
 func TestGetRDB(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping redis connection test in short mode")
+	}
 	// 第一次调用以初始化
 	rdb := GetRDB()
 	if rdb == nil {

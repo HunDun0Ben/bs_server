@@ -6,7 +6,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
+
+	"github.com/HunDun0Ben/bs_server/app/internal/service/butterflysvc"
 )
+
+type ManageHandler struct {
+	butterflyService butterflysvc.ButterflyService
+}
+
+func NewManageHandler(butterflyService butterflysvc.ButterflyService) *ManageHandler {
+	return &ManageHandler{
+		butterflyService: butterflyService,
+	}
+}
 
 // InitImgDB godoc
 // @Summary      初始化图像数据库
@@ -18,7 +30,7 @@ import (
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /manage/initImgDB [get]
 // @Security     BearerAuth
-func InitImgDB(cxt *gin.Context) {
+func (h *ManageHandler) InitImgDB(cxt *gin.Context) {
 }
 
 // InitInsect godoc
@@ -31,7 +43,7 @@ func InitImgDB(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /manage/initInsect [get]
 // @Security     BearerAuth
-func InitInsect(cxt *gin.Context) {
+func (h *ManageHandler) InitInsect(cxt *gin.Context) {
 	filepath := "/home/workspace/data/leedsbutterfly/butterfly_type_info.xlsx"
 	headstr := [...]string{
 		"分类器id", "中文名称", "英文名称", "拉丁学名",
@@ -76,5 +88,5 @@ func InitInsect(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /manage/initClassification [get]
 // @Security     BearerAuth
-func InitClassification(cxt *gin.Context) {
+func (h *ManageHandler) InitClassification(cxt *gin.Context) {
 }

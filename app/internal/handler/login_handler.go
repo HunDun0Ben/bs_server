@@ -16,7 +16,17 @@ import (
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
 )
 
-var userService = usersvc.NewUserService()
+type LoginHandler struct {
+	userService usersvc.UserService
+	authService authsvc.AuthService
+}
+
+func NewLoginHandler(userService usersvc.UserService, authService authsvc.AuthService) *LoginHandler {
+	return &LoginHandler{
+		userService: userService,
+		authService: authService,
+	}
+}
 
 // Login godoc
 // @Summary      用户登录
@@ -30,7 +40,7 @@ var userService = usersvc.NewUserService()
 // @Failure      401  {object}  dto.SwaggerResponse "用户名或密码错误"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /login [post]
-func Login(cxt *gin.Context) {
+func (h *LoginHandler) Login(cxt *gin.Context) {
 	var req dto.LoginRequest
 
 	if err := cxt.Bind(&req); err != nil {
@@ -38,10 +48,9 @@ func Login(cxt *gin.Context) {
 		return
 	}
 	// 查看用户信息
-	user, err := userService.FindByLogin(cxt, req.Username, req.Password)
+	user, err := h.userService.FindByLogin(cxt, req.Username, req.Password)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
-
 		return
 	}
 	accessTokenStr, refreshTokenStr, claims, err := bsjwt.GenerateTokenPair(*user)
@@ -50,7 +59,7 @@ func Login(cxt *gin.Context) {
 		return
 	}
 	// 存储 refresh token 到 redis 中.
-	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
+	err = h.authService.StoreRefreshToken(cxt, claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
 	if err != nil {
 		slog.Error("存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
@@ -74,7 +83,7 @@ func Login(cxt *gin.Context) {
 // @Failure      401  {object}  dto.SwaggerResponse "Refresh Token 无效或已过期"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /token/refresh [get]
-func RefreshToken(cxt *gin.Context) {
+func (h *LoginHandler) RefreshToken(cxt *gin.Context) {
 	refreshTokenStr, err := cxt.Cookie("refreshToken")
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 不存在", nil, err))
@@ -87,7 +96,7 @@ func RefreshToken(cxt *gin.Context) {
 		return
 	}
 	// 查找对应 jti 的 refresh token 是否存在
-	storedUsername, err := authsvc.IsRefreshTokenValid(claims.ID)
+	storedUsername, err := h.authService.IsRefreshTokenValid(cxt, claims.ID)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 已失效或不存在", nil, err))
 		return
@@ -107,7 +116,7 @@ func RefreshToken(cxt *gin.Context) {
 	}
 
 	// 查找用户信息
-	user, err := userService.FindByUsername(cxt, storedUsername)
+	user, err := h.userService.FindByUsername(cxt, storedUsername)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
 		return
@@ -119,7 +128,7 @@ func RefreshToken(cxt *gin.Context) {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
 		return
 	}
-	err = authsvc.StoreRefreshToken(claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
+	err = h.authService.StoreRefreshToken(cxt, claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
 	if err != nil {
 		slog.Error("存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
@@ -143,7 +152,7 @@ func RefreshToken(cxt *gin.Context) {
 // @Failure      401  {object}  dto.SwaggerResponse "认证失败"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /logout [post]
-func Logout(cxt *gin.Context) {
+func (h *LoginHandler) Logout(cxt *gin.Context) {
 	jti := cxt.GetString(bscxt.ContextJTIKey)
 	ExpiresAt := cxt.GetTime(bscxt.ExpiresAtKey)
 
@@ -153,8 +162,8 @@ func Logout(cxt *gin.Context) {
 		return
 	}
 
-	_ = authsvc.InvalidateRefreshToken(jti)
-	err := authsvc.InvalidateAccessToken(jti, remainingTime)
+	_ = h.authService.InvalidateRefreshToken(cxt, jti)
+	err := h.authService.InvalidateAccessToken(cxt, jti, remainingTime)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登出操作失败", nil, err))
 		return

@@ -111,7 +111,6 @@
     ```
 
     **注解详解**:
-
     - `@Summary`: 接口的简短摘要。
     - `@Description`: 接口的详细描述。
     - `@Tags`: 为接口分组，在 Swagger UI 中会显示为不同的类别。
@@ -191,13 +190,11 @@ func InitRouter() *gin.Engine {
 ## 后续使用与维护流程
 
 1.  **开发新接口**:
-
     - 在 `internal/handler/` 中创建或修改 Handler 函数。
     - 按照规范为 Handler 函数编写 `swaggo` 注释。
     - 如果用到了新的 DTO，请确保其结构体定义清晰。
 
 2.  **更新文档**:
-
     - 在项目根目录下，再次运行 `swag init` 命令。
 
 3.  **验证**:

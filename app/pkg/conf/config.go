@@ -2,6 +2,7 @@ package conf
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,23 +20,35 @@ var (
 	fs          afero.Fs = afero.NewOsFs()
 )
 
-// 初始化全局配置.
-func init() {
+// InitConfig 初始化全局配置.
+func InitConfig() error {
 	// 启用环境变量支持覆盖配置文件
 	GlobalViper.AutomaticEnv()
-	loadAllConfig()
-	GlobalViper.Unmarshal(&AppConfig)
+	if err := loadAllConfig(); err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+	if err := GlobalViper.Unmarshal(&AppConfig); err != nil {
+		return fmt.Errorf("failed to unmarshal configuration: %w", err)
+	}
+	slog.Info("Configuration initialized successfully")
+	return nil
 }
 
-func loadAllConfig() {
-	conf, ok := os.LookupEnv("APP_CONF")
+func loadAllConfig() error {
+	confDir, ok := os.LookupEnv("APP_CONF")
 	if !ok {
 		// 配置文件默认位置
-		conf = "./conf"
+		confDir = "./conf"
 	}
-	if err := loadConfigFiles(conf); err != nil {
-		panic(fmt.Errorf("加载配置文件失败: %v", err))
+
+	if _, err := fs.Stat(confDir); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("config directory not found: %s", confDir)
+		}
+		return err
 	}
+
+	return loadConfigFiles(confDir)
 }
 
 // 加载目录下的所有 YAML 文件到对应的 viper 中.

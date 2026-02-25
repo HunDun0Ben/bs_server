@@ -38,11 +38,9 @@ The project follows a typical layered architecture:
 As this project uses the `gocv` library, strict adherence to `gocv.Mat` memory management principles is critical due to its manual memory handling, which is not managed by the Go garbage collector.
 
 1.  **Principle of Ownership:**
-
     - The function that creates a `gocv.Mat` (e.g., via `gocv.IMRead`, `NewMat`, `Clone`, `IMDecode`) is solely responsible for its destruction. Always pair a creation with a `defer mat.Close()` call to guarantee cleanup.
 
 2.  **Principle of Borrowing (Intra-Service):**
-
     - When passing a `gocv.Mat` to another function within the same process, always use a pointer (`*gocv.Mat`). This signals that the callee is only "borrowing" the `Mat`.
     - A function that receives a `*gocv.Mat` must **not** close it.
     - If a function returns a new `gocv.Mat`, it transfers ownership to the caller. The caller is now responsible for closing it.
@@ -75,6 +73,30 @@ The project utilizes a `Makefile` for streamlined development tasks.
 - **Go Version:** The project requires Go 1.24.
 - **Dependency Management:** Go Modules (`go.mod`) are used for managing project dependencies.
 - **Code Linting && Formatting:** Maintain high code quality and style standards by using the project's automation tools. Always run `make format` after making modifications to ensure consistency across the codebase. Linting is enforced via project configurations like `golangci-lint`, `prettier`.
-- **API Documentation:** Swagger annotations are integrated directly into the Go source code (specifically `app/main.go`) for auto-generating API documentation.
+- **API Documentation:** Swagger annotations are embedded throughout the Go source code, including `app/main.go` and individual handler files. Any changes to API handlers must be reflected in the corresponding Swagger annotations in their respective source files. Always regenerate the Swagger documentation (make swag) after modifying API definitions to ensure documentation consistency.
 - **Tracing:** OpenTelemetry is implemented to provide distributed tracing capabilities for monitoring and debugging.
 - **Configuration:** Project configuration is managed using `Viper`, allowing for flexible external configuration.
+
+## Architectural Standards
+
+To ensure maintainability, testability, and scalability, the following architectural standards are mandatory:
+
+1.  **Layered Responsibility:**
+    - **Handler Layer (`internal/handler`)**: Responsible for HTTP request parsing, input validation, and mapping responses. It must NOT contain business logic or database queries. It interacts only with the Service layer via interfaces.
+    - **Service Layer (`internal/service`)**: Contains the core business logic. It orchestrates domain objects and interacts with the Repository layer via interfaces. Services must be decoupled from transport protocols (like HTTP).
+    - **Repository Layer (`internal/repository`)**: Handles data persistence (e.g., MongoDB, Redis). It abstracts the underlying storage details from the Service layer.
+
+2.  **Interface-Based Design:**
+    - All cross-layer and cross-package communication MUST be done through interfaces.
+    - Interfaces should be defined in the package that provides the implementation.
+
+3.  **Dependency Injection (DI):**
+    - Use **Constructor Injection**. Every struct representing a handler, service, or repository must have a `New...` constructor that accepts its dependencies as interfaces.
+    - Avoid package-level global variables for stateful objects (e.g., database clients should be passed, not accessed globally).
+    - Do NOT instantiate dependencies inside methods using `New...` or by calling package-level functions.
+
+4.  **Handler Implementation:**
+    - Handlers must be implemented as methods on a struct (e.g., `type UserHandler struct { ... }`). Standalone functions for handlers are prohibited to allow for proper dependency injection and testing.
+
+5.  **Error Handling:**
+    - Use the project's `AppError` for consistent error reporting across all layers.

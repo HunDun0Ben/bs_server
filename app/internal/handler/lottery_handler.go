@@ -10,6 +10,12 @@ import (
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
 )
 
+type LotteryHandler struct{}
+
+func NewLotteryHandler() *LotteryHandler {
+	return &LotteryHandler{}
+}
+
 // BigLotteryRandom godoc
 // @Summary      生成大乐透随机号码
 // @Description  生成大乐透随机号码，分为前区和后区两部分
@@ -19,7 +25,7 @@ import (
 // @Success      200  {object}  dto.SwaggerResponse{data=dto.LotteryResult} "成功响应，返回随机生成的大乐透号码"
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /lottery/bigLottery/random [get]
-func BigLotteryRandom(cxt *gin.Context) {
+func (h *LotteryHandler) BigLotteryRandom(cxt *gin.Context) {
 	source := rand.NewSource(time.Now().UnixNano())
 	rng := rand.New(source)
 

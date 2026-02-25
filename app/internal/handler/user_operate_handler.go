@@ -14,12 +14,31 @@ import (
 	"github.com/HunDun0Ben/bs_server/app/internal/dto"
 	"github.com/HunDun0Ben/bs_server/app/internal/service/authsvc"
 	"github.com/HunDun0Ben/bs_server/app/internal/service/butterflysvc"
+	"github.com/HunDun0Ben/bs_server/app/internal/service/usersvc"
 	"github.com/HunDun0Ben/bs_server/app/pkg/bscxt"
 	"github.com/HunDun0Ben/bs_server/app/pkg/bsvo"
 	"github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
 	"github.com/HunDun0Ben/bs_server/app/pkg/data/imongo/imongoutil"
 	"github.com/HunDun0Ben/bs_server/app/pkg/helper"
 )
+
+type UserHandler struct {
+	userService      usersvc.UserService
+	authService      authsvc.AuthService
+	butterflyService butterflysvc.ButterflyService
+}
+
+func NewUserHandler(
+	userService usersvc.UserService,
+	authService authsvc.AuthService,
+	butterflyService butterflysvc.ButterflyService,
+) *UserHandler {
+	return &UserHandler{
+		userService:      userService,
+		authService:      authService,
+		butterflyService: butterflyService,
+	}
+}
 
 // UploadImg godoc
 // @Summary      上传图片
@@ -33,7 +52,7 @@ import (
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /user/uploadImg [post]
 // @Security     BearerAuth
-func UploadImg(cxt *gin.Context) {
+func (h *UserHandler) UploadImg(cxt *gin.Context) {
 	file, header, err := cxt.Request.FormFile("file")
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的文件", nil, err))
@@ -46,6 +65,7 @@ func UploadImg(cxt *gin.Context) {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "读取文件失败", nil, err))
 		return
 	}
+	// TODO: Move file storage logic to a dedicated service if needed.
 	fileID, err := imongoutil.StoreFile(
 		cxt,
 		"updateImg",
@@ -77,7 +97,7 @@ func UploadImg(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /user/getImgResult [get]
 // @Security     BearerAuth
-func GetImgResult(cxt *gin.Context) {
+func (h *UserHandler) GetImgResult(cxt *gin.Context) {
 	var req dto.GetImgResultReq
 	if err := cxt.ShouldBindQuery(&req); err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "无效的请求参数", nil, err))
@@ -110,7 +130,7 @@ func GetImgResult(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /user/insect [get]
 // @Security     BearerAuth
-func InsectInfo(cxt *gin.Context) {
+func (h *UserHandler) InsectInfo(cxt *gin.Context) {
 }
 
 // ButterflyInfo godoc
@@ -124,8 +144,8 @@ func InsectInfo(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /user/butterfly_type_info [get]
 // @Security     BearerAuth
-func ButterflyInfo(cxt *gin.Context) {
-	insect_list, err := butterflysvc.NewButterflyTypeSvc().GetAllList(cxt.Request.Context())
+func (h *UserHandler) ButterflyInfo(cxt *gin.Context) {
+	insect_list, err := h.butterflyService.GetTypes(cxt.Request.Context())
 	if err != nil {
 		cxt.JSON(http.StatusInternalServerError, gin.H{"error": "error fetching butterfly info"})
 		return
@@ -148,7 +168,7 @@ func ButterflyInfo(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /user/mfa/setup/totp [get]
 // @Security     BearerAuth
-func SetupTotp(cxt *gin.Context) {
+func (h *UserHandler) SetupTotp(cxt *gin.Context) {
 	// 从上下文获取用户名
 	username := cxt.GetString(bscxt.ContextUsernameKey)
 	if username == "" {
@@ -156,25 +176,22 @@ func SetupTotp(cxt *gin.Context) {
 		return
 	}
 
-	// 创建MFA服务实例
-	mfaService := authsvc.NewMFAService()
-
 	// 生成TOTP密钥
-	key, err := mfaService.GenerateTOTPSecret(username)
+	key, err := h.authService.GenerateTOTPSecret(username)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成TOTP密钥失败", nil, err))
 		return
 	}
 
 	// 生成恢复码
-	recoveryCodes, err := mfaService.GenerateRecoveryCodes()
+	recoveryCodes, err := h.authService.GenerateRecoveryCodes()
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成恢复码失败", nil, err))
 		return
 	}
 
 	// 将TOTP密钥保存到数据库 (此时 mfaEnabled 为 false)
-	err = mfaService.SaveMFASecret(cxt.Request.Context(), username, key.Secret())
+	err = h.authService.SaveMFASecret(cxt.Request.Context(), username, key.Secret())
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "保存MFA配置失败", nil, err))
 		return
@@ -217,7 +234,7 @@ func SetupTotp(cxt *gin.Context) {
 // @Failure      500  {object}  dto.SwaggerResponse "服务器内部错误"
 // @Router       /user/mfa/verify/totp [post]
 // @Security     BearerAuth
-func VerifyTotp(cxt *gin.Context) {
+func (h *UserHandler) VerifyTotp(cxt *gin.Context) {
 	// 从上下文获取用户名
 	username := cxt.GetString(bscxt.ContextUsernameKey)
 	if username == "" {
@@ -232,18 +249,15 @@ func VerifyTotp(cxt *gin.Context) {
 		return
 	}
 
-	// 创建MFA服务实例
-	mfaService := authsvc.NewMFAService()
-
 	// 获取用户的TOTP secret
-	secret, err := mfaService.GetUserMFASecret(cxt.Request.Context(), username)
+	secret, err := h.authService.GetUserMFASecret(cxt.Request.Context(), username)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "获取MFA配置失败", nil, err))
 		return
 	}
 
 	// 验证TOTP码并激活MFA
-	err = mfaService.VerifyAndActivateMFA(cxt.Request.Context(), username, secret, req.Code)
+	err = h.authService.VerifyAndActivateMFA(cxt.Request.Context(), username, secret, req.Code)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusBadRequest, "TOTP验证失败", nil, err))
 		return

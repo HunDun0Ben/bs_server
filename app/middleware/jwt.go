@@ -12,7 +12,7 @@ import (
 )
 
 // JWTAuth JWT 认证中间件.
-func JWTAuth() gin.HandlerFunc {
+func JWTAuth(authSvc authsvc.AuthService) gin.HandlerFunc {
 	// 解析 JWT
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader(bsjwt.AuthHeaderName)
@@ -23,7 +23,7 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 
-		is, err := authsvc.IsAccessTokenValid(claims.ID)
+		is, err := authSvc.IsAccessTokenValid(c, claims.ID)
 		if !is {
 			c.Error(bsvo.NewAppError(http.StatusUnauthorized, "Token 已失效", nil, nil))
 			c.Abort()

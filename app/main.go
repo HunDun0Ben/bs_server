@@ -44,9 +44,12 @@ import (
 )
 
 func main() {
-	cleanup := initTracerProvider()
-	defer cleanup()
-
+	if err := conf.InitConfig(); err != nil {
+		slog.Error("Failed to initialize config", "error", err)
+		os.Exit(1)
+	}
+	trace_clean := initTracerProvider()
+	defer trace_clean()
 	// 连接数据库
 	loadDataBase()
 	// 启动服务器
@@ -58,7 +61,6 @@ func initTracerProvider() func() {
 		return func() {}
 	}
 	ctx := context.Background()
-
 	var opts []otlptracegrpc.Option
 	opts = append(opts, otlptracegrpc.WithEndpoint(conf.AppConfig.OTEL.Endpoint))
 	if conf.AppConfig.OTEL.Insecure {

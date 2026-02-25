@@ -8,12 +8,15 @@ import (
 	"github.com/xuri/excelize/v2"
 
 	"github.com/HunDun0Ben/bs_server/app/internal/model/insect"
+	"github.com/HunDun0Ben/bs_server/app/internal/repository"
 	"github.com/HunDun0Ben/bs_server/app/internal/service/butterflysvc"
+	"github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
 )
 
 func main() {
-	svc := butterflysvc.NewButterflyTypeSvc()
-	count, err := svc.Count(context.Background())
+	repo := repository.NewButterflyRepository(imongo.BizDataBase())
+	svc := butterflysvc.NewButterflyService(repo)
+	count, err := svc.CountTypes(context.Background())
 	if err != nil {
 		slog.Error("获取数据数量失败", "err", err)
 		return
@@ -23,7 +26,7 @@ func main() {
 		return
 	}
 	list, _ := loadTypeInfoFromCSV()
-	if err := svc.InitAll(context.Background(), list); err != nil {
+	if err := svc.InitTypes(context.Background(), list); err != nil {
 		slog.Error("初始化蝴蝶信息失败", "err", err)
 		return
 	}

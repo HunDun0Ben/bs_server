@@ -8,20 +8,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/HunDun0Ben/bs_server/app/internal/model/user"
-	"github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
+	"github.com/HunDun0Ben/bs_server/app/internal/repository"
 )
 
-type UserService struct {
-	col *mongo.Collection
+type UserService interface {
+	FindByLogin(ctx context.Context, username, password string) (*user.User, error)
+	FindByUsername(ctx context.Context, username string) (*user.User, error)
+	EnableMFA(ctx context.Context, username, secret string, recoveryCodes []string) error
+	GetMFAInfo(ctx context.Context, username string) (string, bool, error)
+	SaveMFASecret(ctx context.Context, username, secret string) error
 }
 
-func NewUserService() *UserService {
-	return &UserService{imongo.BizDataBase().Collection("user")}
+type userService struct {
+	repo repository.UserRepository
 }
 
-func (s *UserService) FindByLogin(ctx context.Context, username, password string) (*user.User, error) {
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{repo: repo}
+}
+
+func (s *userService) FindByLogin(ctx context.Context, username, password string) (*user.User, error) {
 	var u user.User
-	err := s.col.FindOne(ctx, bson.M{"username": username, "password": password}).Decode(&u)
+	err := s.repo.FindOne(ctx, bson.M{"username": username, "password": password}).Decode(&u)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -31,9 +39,9 @@ func (s *UserService) FindByLogin(ctx context.Context, username, password string
 	return &u, nil
 }
 
-func (s *UserService) FindByUsername(ctx context.Context, username string) (*user.User, error) {
+func (s *userService) FindByUsername(ctx context.Context, username string) (*user.User, error) {
 	var u user.User
-	err := s.col.FindOne(ctx, bson.M{"username": username}).Decode(&u)
+	err := s.repo.FindOne(ctx, bson.M{"username": username}).Decode(&u)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -43,8 +51,8 @@ func (s *UserService) FindByUsername(ctx context.Context, username string) (*use
 	return &u, nil
 }
 
-func (s *UserService) EnableMFA(ctx context.Context, username, secret string, recoveryCodes []string) error {
-	_, err := s.col.UpdateOne(ctx, bson.M{"username": username}, bson.M{
+func (s *userService) EnableMFA(ctx context.Context, username, secret string, recoveryCodes []string) error {
+	_, err := s.repo.UpdateOne(ctx, bson.M{"username": username}, bson.M{
 		"$set": bson.M{
 			"mfaSecret":     secret,
 			"mfaEnabled":    true,
@@ -54,9 +62,9 @@ func (s *UserService) EnableMFA(ctx context.Context, username, secret string, re
 	return err
 }
 
-func (s *UserService) GetMFAInfo(ctx context.Context, username string) (string, bool, error) {
+func (s *userService) GetMFAInfo(ctx context.Context, username string) (string, bool, error) {
 	var u user.User
-	err := s.col.FindOne(ctx, bson.M{"username": username}, nil).Decode(&u)
+	err := s.repo.FindOne(ctx, bson.M{"username": username}, nil).Decode(&u)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return "", false, nil
@@ -66,8 +74,8 @@ func (s *UserService) GetMFAInfo(ctx context.Context, username string) (string, 
 	return u.MFASecret, u.MFAEnabled, nil
 }
 
-func (s *UserService) SaveMFASecret(ctx context.Context, username, secret string) error {
-	_, err := s.col.UpdateOne(ctx, bson.M{"username": username}, bson.M{
+func (s *userService) SaveMFASecret(ctx context.Context, username, secret string) error {
+	_, err := s.repo.UpdateOne(ctx, bson.M{"username": username}, bson.M{
 		"$set": bson.M{
 			"mfaSecret":  secret,
 			"mfaEnabled": false,
