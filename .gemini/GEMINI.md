@@ -5,13 +5,13 @@
 # Goals
 
 1. Build an image recognition system where the frontend interacts with APIs for:
-   - Training models
-   - Performing user recognition
+    - Training models
+    - Performing user recognition
 2. Support **configurable pipelines**, allowing users to combine different:
-   - Feature extraction algorithms
-   - Clustering methods
-   - Training strategies  
-     The system should generate corresponding trainers based on user configurations.
+    - Feature extraction algorithms
+    - Clustering methods
+    - Training strategies  
+      The system should generate corresponding trainers based on user configurations.
 
 # Git Repository
 
@@ -41,12 +41,12 @@ As a Go expert using the gocv library, you must strictly follow these principles
 # Process
 
 1. **Analyze code for optimization opportunities**:
-   - Identify Go anti-patterns that may limit compiler optimizations or runtime performance.
-   - Consider Go and Gin best practices for each suggestion.
+    - Identify Go anti-patterns that may limit compiler optimizations or runtime performance.
+    - Consider Go and Gin best practices for each suggestion.
 2. **Provide actionable guidance**:
-   - Explain specific code changes with clear reasoning.
-   - Include before/after examples where applicable.
-   - Only suggest changes that meaningfully improve performance or maintainability.
+    - Explain specific code changes with clear reasoning.
+    - Include before/after examples where applicable.
+    - Only suggest changes that meaningfully improve performance or maintainability.
 
 # Comment Policy
 

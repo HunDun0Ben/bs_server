@@ -17,18 +17,39 @@ JWT_TOOL_SRC    := app/scripts/jwtscr/generate_jwt_tokens.go
 JWT_TOOL_TARGET := $(BIN_DIR)/generate_jwt_tokens
 
 # Swagger
-SWAGGER_MAIN_FILE  := app/main.go
+SWAGGER_SEARCH_DIR := app
+SWAGGER_MAIN_FILE  := main.go
 SWAGGER_OUTPUT_DIR := app/docs/swagger
+
+# Module name for gci
+MODULE := $(shell go list -m)
 
 # ==============================================================================
 # Main Targets
 # ==============================================================================
 
 # .PHONY 告诉 make, 这些目标不是真实的文件名
-.PHONY: all build tools swagger clean help format
+.PHONY: all build tools swagger clean help format test test-int cover
 
 # 默认目标：构建所有内容
 all: build tools swagger ## Build main app, tools, and generate docs
+
+# 单元测试
+test: ## Run unit tests
+	@echo "🧪 Running unit tests (excluding scripts)..."
+	APP_CONF=$(shell pwd)/conf go test -v -short $(shell go list ./... | grep -v /app/scripts)
+
+# 集成测试
+test-int: ## Run integration tests
+	@echo "🔗 Running integration tests (excluding scripts)..."
+	APP_CONF=$(shell pwd)/conf go test -v -tags=integration $(shell go list ./... | grep -v /app/scripts)
+
+# 覆盖率报告
+cover: ## Generate test coverage report
+	@echo "📊 Generating coverage report (excluding scripts)..."
+	APP_CONF=$(shell pwd)/conf go test -coverprofile=coverage.out $(shell go list ./... | grep -v /app/scripts)
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "✅ Coverage report generated at coverage.html"
 
 # 构建主应用
 build: $(MAIN_APP_TARGET) ## Build the main application
@@ -39,11 +60,13 @@ tools: $(JWT_TOOL_TARGET) ## Build all go scripts tools
 # 生成 Swagger/OpenAPI 文档
 swagger: ## Generate Swagger/OpenAPI documentation
 	@echo "📜 Generating Swagger docs..."
-	swag init -g $(SWAGGER_MAIN_FILE) --output $(SWAGGER_OUTPUT_DIR)
+	swag init -d $(SWAGGER_SEARCH_DIR) -g $(SWAGGER_MAIN_FILE) --output $(SWAGGER_OUTPUT_DIR)
 
-format: ## Format Go files using gci
+format: ## Format files using gci and prettier
 	@echo "🎨 Formatting Go files..."
-	gci write --section standard --section default --section "prefix(github.com/HunDun0Ben/bs_server)" --section alias --section blank --section dot .
+	gci write --section standard --section default --section "prefix($(MODULE))" --section alias --section blank --section dot .
+	@echo "✨ Formatting other files with prettier..."
+	prettier --write . --ignore-unknown
 
 # 清理所有生成的文件
 clean: ## Clean up all generated files

@@ -1,5 +1,5 @@
 mongodb:
   uri: mongodb://localhost:27017
-  biz_db: bs_server_db 
+  biz_db: bs_server_db
   file_db: file_db
   debug: false

@@ -1,4 +1,4 @@
-### 抄袭 viper
+### 借鉴 viper
 run:
   timeout: 5m
   issues.exclude-dirs:
