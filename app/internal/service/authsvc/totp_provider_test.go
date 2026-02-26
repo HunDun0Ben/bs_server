@@ -15,7 +15,7 @@ func TestTOTPProvider_Verify(t *testing.T) {
 
 	t.Run("Valid Code", func(t *testing.T) {
 		code, err := totp.GenerateCode(secret, time.Now())
-		
+
 		valid, err := provider.Verify(context.Background(), secret, code)
 		assert.NoError(t, err)
 		assert.True(t, valid)
