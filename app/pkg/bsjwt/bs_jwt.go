@@ -20,17 +20,23 @@ const (
 	RefreshToken = "refresh_token"
 )
 
-type Claims struct {
-	Username string   `json:"username"`
-	Roles    []string `json:"roles,omitempty"`
+type CustomClaims struct {
+	Username      string   `json:"username"`
+	Roles         []string `json:"roles,omitempty"`
+	UserID        string   `json:"uid"`
+	MFAPending    bool     `json:"mfa_p"`
+	RequiredTypes []string `json:"mfa_types"`
 	jwt.RegisteredClaims
 }
 
 // GenerateAccessToken 只生成 Access Token.
-func GenerateAccessToken(username string, roles []string) (string, error) {
-	claims := Claims{
-		username,
-		roles,
+func GenerateAccessToken(user user.User, mfaPending bool, requiredTypes []string) (string, error) {
+	claims := CustomClaims{
+		user.Username,
+		user.Roles,
+		user.ID,
+		mfaPending,
+		requiredTypes,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AppConfig.JWT.Expire)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -44,11 +50,13 @@ func GenerateAccessToken(username string, roles []string) (string, error) {
 }
 
 // GenerateRefreshToken 只生成 Refresh Token，不包含任何用户信息.
-func GenerateRefreshToken() (string, *Claims, error) {
-	refreshClaims := &Claims{
+func GenerateRefreshToken(mfaPending bool, requiredTypes []string) (string, *CustomClaims, error) {
+	refreshClaims := &CustomClaims{
 		// Username 和 Roles 被有意留空
-		Username: "",
-		Roles:    nil,
+		Username:      "",
+		Roles:         nil,
+		MFAPending:    mfaPending,
+		RequiredTypes: requiredTypes,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// Refresh Token 的过期时间更长
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(conf.AppConfig.JWT.RefreshExpire)),
@@ -64,13 +72,13 @@ func GenerateRefreshToken() (string, *Claims, error) {
 }
 
 // GenerateTokenPair 生成 Access Token 和 Refresh Token.
-func GenerateTokenPair(user user.User) (accessTokenStr, refreshTokenStr string, claims *Claims, err error) {
-	accessToken, err := GenerateAccessToken(user.Username, user.Roles)
+func GenerateTokenPair(user user.User, mfaPending bool, requiredTypes []string) (accessTokenStr, refreshTokenStr string, claims *CustomClaims, err error) {
+	accessToken, err := GenerateAccessToken(user, mfaPending, requiredTypes)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	refreshToken, claims, err := GenerateRefreshToken()
+	refreshToken, claims, err := GenerateRefreshToken(mfaPending, requiredTypes)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -78,21 +86,21 @@ func GenerateTokenPair(user user.User) (accessTokenStr, refreshTokenStr string, 
 }
 
 // ParseToken 解析 JWT token.
-func ParseToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
+func ParseToken(tokenString string) (*CustomClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (any, error) {
 		return []byte(conf.AppConfig.JWT.Secret), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, errors.New("无效的Token")
 }
 
-// parseTokenByHeader 从请求头中解析和验证 JWT.
-func ParseTokenByHeader(authHeader string) (*Claims, error) {
+// ParseTokenByHeader 从请求头中解析和验证 JWT.
+func ParseTokenByHeader(authHeader string) (*CustomClaims, error) {
 	if authHeader == "" {
 		return nil, errors.New("未提供认证信息")
 	}

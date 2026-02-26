@@ -32,9 +32,10 @@ func InitRoute(engine *gin.Engine) {
 	userService := usersvc.NewUserService(userRepo)
 	authService := authsvc.NewAuthService(authRepo, userService)
 	butterflyService := butterflysvc.NewButterflyService(butterflyRepo)
+	mfaVerificationService := authsvc.NewMFAVerificationService()
 
 	// --- 3. Handler Layer ---
-	loginHandler := handler.NewLoginHandler(userService, authService)
+	loginHandler := handler.NewLoginHandler(userService, authService, mfaVerificationService)
 	userHandler := handler.NewUserHandler(userService, authService, butterflyService)
 	lotteryHandler := handler.NewLotteryHandler()
 	manageHandler := handler.NewManageHandler(butterflyService)
@@ -66,8 +67,10 @@ func InitRoute(engine *gin.Engine) {
 	auth := apiV1.Group("/")
 	if conf.AppConfig.JWT.Enable {
 		auth.Use(middleware.JWTAuth(authService))
+		auth.Use(middleware.MFAEnforcerMiddleware()) // 在 JWT 之后注册
 	}
 	auth.POST("/logout", loginHandler.Logout)
+	auth.POST("/login/mfa-verify", loginHandler.VerifyMFA)
 
 	// 彩票相关路由
 	{

@@ -11,6 +11,7 @@ type User struct {
 	Password    string    `bson:"password" json:"-"`
 	CreatedAt   time.Time `bson:"createdAt" json:"createdAt"`
 	LastLoginAt time.Time `bson:"lastLoginAt" json:"lastLoginAt"`
+	LastLoginIP string    `bson:"lastLoginIP" json:"lastLoginIP"`
 	IsActive      bool      `bson:"isActive" json:"isActive"`
 	Roles         []string  `bson:"roles" json:"roles"`
 	MFASecret     string    `bson:"mfaSecret,omitempty" json:"-"`

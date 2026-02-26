@@ -6,4 +6,5 @@ const (
 	ContextRolesKey    = "roles"
 	ContextJTIKey      = "jti" // JWT ID
 	ExpiresAtKey       = "expiresAt"
+	ContextClaimsKey   = "claims"
 )

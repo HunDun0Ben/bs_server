@@ -3,8 +3,10 @@ package usersvc
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/HunDun0Ben/bs_server/app/internal/model/user"
@@ -17,6 +19,8 @@ type UserService interface {
 	EnableMFA(ctx context.Context, username, secret string, recoveryCodes []string) error
 	GetMFAInfo(ctx context.Context, username string) (string, bool, error)
 	SaveMFASecret(ctx context.Context, username, secret string) error
+	IsHighRisk(ctx context.Context, u *user.User, ip string) (bool, []string)
+	UpdateLoginInfo(ctx context.Context, userID string, ip string) error
 }
 
 type userService struct {
@@ -79,6 +83,27 @@ func (s *userService) SaveMFASecret(ctx context.Context, username, secret string
 		"$set": bson.M{
 			"mfaSecret":  secret,
 			"mfaEnabled": false,
+		},
+	})
+	return err
+}
+
+func (s *userService) IsHighRisk(_ context.Context, u *user.User, ip string) (bool, []string) {
+	if u.LastLoginIP != "" && u.LastLoginIP != ip {
+		return true, []string{"totp", "sms"} // sms is a placeholder
+	}
+	return false, nil
+}
+
+func (s *userService) UpdateLoginInfo(ctx context.Context, userID string, ip string) error {
+	objID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+	_, err = s.repo.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{
+		"$set": bson.M{
+			"lastLoginIP": ip,
+			"lastLoginAt": time.Now(),
 		},
 	})
 	return err
