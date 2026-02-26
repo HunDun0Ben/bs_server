@@ -35,7 +35,7 @@ func main() {
 	slog.Info("User info for token generation", "user", u)
 
 	conf.AppConfig.JWT.Expire = time.Duration(expire) * time.Second
-	atok, rftok, _, _ := bsjwt.GenerateTokenPair(u)
+	atok, rftok, _, _ := bsjwt.GenerateTokenPair(u, false, nil)
 	slog.Info("Generated tokens", slog.String("accessToken", atok),
 		slog.String("refreshToken", rftok))
 }
