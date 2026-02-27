@@ -65,9 +65,8 @@ swagger: ## Generate Swagger/OpenAPI documentation
 	@echo "📜 Generating Swagger docs..."
 	swag init -d $(SWAGGER_SEARCH_DIR) -g $(SWAGGER_MAIN_FILE) --output $(SWAGGER_OUTPUT_DIR)
 
-format: ## Format files using goimports, gofmt, gci and prettier
+format: ## Format files using gofmt, gci and prettier
 	@echo "🎨 Formatting Go files..."
-	goimports -w .
 	gofmt -s -w .
 	gci write --section standard --section default --section "prefix($(MODULE))" --section alias --section blank --section dot .
 	@echo "✨ Formatting other files with prettier..."
