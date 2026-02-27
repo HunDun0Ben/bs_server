@@ -31,7 +31,10 @@ MODULE := $(shell go list -m)
 # .PHONY 告诉 make, 这些目标不是真实的文件名
 .PHONY: all build tools swagger clean help format test test-int cover
 
-# 默认目标：构建所有内容
+# 默认目标：显示帮助信息
+default: help
+
+# 构建所有内容
 all: build tools swagger ## Build main app, tools, and generate docs
 
 # 单元测试
@@ -62,8 +65,10 @@ swagger: ## Generate Swagger/OpenAPI documentation
 	@echo "📜 Generating Swagger docs..."
 	swag init -d $(SWAGGER_SEARCH_DIR) -g $(SWAGGER_MAIN_FILE) --output $(SWAGGER_OUTPUT_DIR)
 
-format: ## Format files using gci and prettier
+format: ## Format files using goimports, gofmt, gci and prettier
 	@echo "🎨 Formatting Go files..."
+	goimports -w .
+	gofmt -s -w .
 	gci write --section standard --section default --section "prefix($(MODULE))" --section alias --section blank --section dot .
 	@echo "✨ Formatting other files with prettier..."
 	prettier --write . --ignore-unknown
