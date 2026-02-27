@@ -38,6 +38,7 @@ func JWTAuth(authSvc authsvc.AuthService) gin.HandlerFunc {
 		c.Set(bscxt.ContextRolesKey, claims.Roles)
 		c.Set(bscxt.ContextJTIKey, claims.ID)
 		c.Set(bscxt.ExpiresAtKey, claims.ExpiresAt.Time)
+		c.Set(bscxt.ContextClaimsKey, claims)
 
 		c.Next()
 	}
