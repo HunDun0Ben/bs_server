@@ -152,10 +152,10 @@ func TestLoginHandler_Login_MFA_Required(t *testing.T) {
 		LastLoginIP: "1.1.1.1",
 	}
 
-	// 模拟核心流程：验证账号 -> 识别风险 -> 记录登录信息 -> 生成受限令牌
+	// 模拟核心流程：验证账号 -> 识别风险 -> 生成受限令牌 (此时不更新登录信息)
 	mockUserSvc.On("FindByLogin", mock.Anything, "testuser", "password").Return(testUser, nil)
 	mockUserSvc.On("IsHighRisk", mock.Anything, testUser, mock.Anything).Return(true, []string{"totp"}).Once()
-	mockUserSvc.On("UpdateLoginInfo", mock.Anything, "user-123", mock.Anything).Return(nil)
+	// mockUserSvc.On("UpdateLoginInfo", ...) 不应被调用
 	mockAuthSvc.On("StoreRefreshToken", mock.Anything, mock.Anything, "testuser", mock.Anything).Return(nil)
 
 	loginReq := dto.LoginRequest{
@@ -243,10 +243,11 @@ func TestLoginHandler_VerifyMFA_Success(t *testing.T) {
 		Username: "testuser",
 	}
 
-	// 模拟验证流程：查找用户 -> 获取 MFA 配置 -> 调用验证器 -> 验证成功 -> 生成新令牌 -> 作废旧令牌
+	// 模拟验证流程：查找用户 -> 获取 MFA 配置 -> 调用验证器 -> 验证成功 -> 更新登录信息 -> 生成新令牌 -> 作废旧令牌
 	mockUserSvc.On("FindByUsername", mock.Anything, "testuser").Return(testUser, nil)
 	mockUserSvc.On("GetMFAInfo", mock.Anything, "testuser").Return("secret-123", true, nil)
 	mockProvider.On("Verify", mock.Anything, "secret-123", "123456").Return(true, nil)
+	mockUserSvc.On("UpdateLoginInfo", mock.Anything, "user-123", mock.Anything).Return(nil)
 
 	mockAuthSvc.On("InvalidateAccessToken", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	mockAuthSvc.On("StoreRefreshToken", mock.Anything, mock.Anything, "testuser", mock.Anything).Return(nil)

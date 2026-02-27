@@ -65,12 +65,15 @@ func (h *LoginHandler) Login(cxt *gin.Context) {
 		return
 	}
 
-	// 更新用户登录信息
-	err = h.userService.UpdateLoginInfo(cxt, user.ID, clientIP)
-	if err != nil {
-		slog.Error("更新用户登录信息失败", "error", err)
-		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
-		return
+	// 非完整权限操作. 保证以后当非完整权限功能范围扩大时候, 知道副作用在哪里进行执行.
+	// 更新登录信息可能只是其中之一.
+	if !mfaRequired {
+		err = h.userService.UpdateLoginInfo(cxt, user.ID, clientIP)
+		if err != nil {
+			slog.Error("更新用户登录信息失败", "error", err)
+			cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
+			return
+		}
 	}
 
 	// 存储 refresh token 到 redis 中.
@@ -260,6 +263,15 @@ func (h *LoginHandler) VerifyMFA(cxt *gin.Context) {
 	}
 
 	// 验证成功，签发新的全权限 Token
+	// 非完整权限操作. 保证以后当非完整权限功能范围扩大时候, 知道副作用在哪里进行执行.
+	// 更新登录信息可能只是其中之一.
+	err = h.userService.UpdateLoginInfo(cxt, user.ID, cxt.ClientIP())
+	if err != nil {
+		slog.Error("更新用户登录信息失败", "error", err)
+		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
+		return
+	}
+
 	accessTokenStr, refreshTokenStr, newClaims, err := bsjwt.GenerateTokenPair(*user, false, nil)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
