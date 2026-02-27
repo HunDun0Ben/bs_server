@@ -8,7 +8,7 @@ type LoginRequest struct {
 
 // LoginResponse 定义了成功登录后返回的数据结构.
 type LoginResponse struct {
-	AccessToken   string   `json:"accessToken"`    // JWT 访问令牌
+	AccessToken   string   `json:"accessToken"`              // JWT 访问令牌
 	MFARequired   bool     `json:"mfa_required,omitempty"`   // 是否需要 MFA
 	RequiredTypes []string `json:"required_types,omitempty"` // 需要的 MFA 类型列表
 }
