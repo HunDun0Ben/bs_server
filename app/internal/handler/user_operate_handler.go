@@ -59,7 +59,7 @@ func (h *UserHandler) UploadImg(cxt *gin.Context) {
 		return
 	}
 	defer file.Close()
-	slog.Info("Uploading file", "filename", header.Filename)
+	slog.InfoContext(cxt.Request.Context(), "Uploading file", "filename", header.Filename)
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "读取文件失败", nil, err))
@@ -67,7 +67,7 @@ func (h *UserHandler) UploadImg(cxt *gin.Context) {
 	}
 	// TODO: Move file storage logic to a dedicated service if needed.
 	fileID, err := imongoutil.StoreFile(
-		cxt,
+		cxt.Request.Context(),
 		"updateImg",
 		imongo.FileStoreData{FileName: header.Filename, Content: fileContent},
 	)
@@ -104,7 +104,7 @@ func (h *UserHandler) GetImgResult(cxt *gin.Context) {
 		return
 	}
 
-	_, err := imongoutil.GetFile(cxt, "updateImg", req.ImgID)
+	_, err := imongoutil.GetFile(cxt.Request.Context(), "updateImg", req.ImgID)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			cxt.Error(bsvo.NewAppError(http.StatusNotFound, "图片未找到", nil, err))

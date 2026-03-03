@@ -51,18 +51,18 @@ func (h *ManageHandler) InitInsect(cxt *gin.Context) {
 	}
 	f, err := excelize.OpenFile(filepath)
 	if err != nil {
-		slog.Error("open file error", "err", err)
+		slog.ErrorContext(cxt.Request.Context(), "open file error", "err", err)
 		return
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			slog.Error("close file error", "err", err)
+			slog.ErrorContext(cxt.Request.Context(), "close file error", "err", err)
 		}
 	}()
 
 	rows, err := f.GetRows("Sheet1")
 	if err != nil {
-		slog.Error("get rows error", "err", err)
+		slog.ErrorContext(cxt.Request.Context(), "get rows error", "err", err)
 		return
 	}
 	for i, row := range rows {
@@ -73,9 +73,9 @@ func (h *ManageHandler) InitInsect(cxt *gin.Context) {
 		for _, colCell := range row {
 			a += colCell + "\t"
 		}
-		slog.Info(a)
+		slog.InfoContext(cxt.Request.Context(), a)
 	}
-	slog.Info("excel head", "head", headstr)
+	slog.InfoContext(cxt.Request.Context(), "excel head", "head", headstr)
 }
 
 // InitClassification godoc

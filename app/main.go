@@ -31,15 +31,20 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/HunDun0Ben/bs_server/app/api"
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
+	"github.com/HunDun0Ben/bs_server/app/pkg/logger"
 
 	mcli "github.com/HunDun0Ben/bs_server/app/pkg/data/imongo"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
@@ -48,51 +53,86 @@ func main() {
 		slog.Error("Failed to initialize config", "error", err)
 		os.Exit(1)
 	}
-	trace_clean := initTracerProvider()
-	defer trace_clean()
+	// 初始化 OTel (Tracing + Logging)
+	otel_clean := initOTel()
+	defer otel_clean()
 	// 连接数据库
 	loadDataBase()
 	// 启动服务器
 	startServer()
 }
 
-func initTracerProvider() func() {
+func initOTel() func() {
 	if !conf.AppConfig.OTEL.Enable {
+		// 如果未开启 OTel，依然使用基础的 OTelHandler (仅注入 ID 到 Stdout)
+		slog.SetDefault(slog.New(logger.NewOTelHandler(slog.NewJSONHandler(os.Stdout, nil))))
 		return func() {}
 	}
+
 	ctx := context.Background()
-	var opts []otlptracegrpc.Option
-	opts = append(opts, otlptracegrpc.WithEndpoint(conf.AppConfig.OTEL.Endpoint))
-	if conf.AppConfig.OTEL.Insecure {
-		opts = append(opts, otlptracegrpc.WithInsecure())
-	}
-
-	// 配置 OTLP gRPC 导出器
-	exporter, err := otlptracegrpc.New(ctx, opts...)
-	if err != nil {
-		slog.Error("Failed to create OTLP exporter", "error", err)
-		return func() {}
-	}
-
-	// 配置资源信息
-	resource := resource.NewWithAttributes(
+	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceName(conf.AppConfig.OTEL.ServiceName),
 		semconv.ServiceVersion(conf.AppConfig.OTEL.Version),
 	)
 
-	// 创建 TracerProvider
-	tp := trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(resource),
-	)
+	// --- 1. Tracing 配置 ---
+	var traceOpts []otlptracegrpc.Option
+	traceOpts = append(traceOpts, otlptracegrpc.WithEndpoint(conf.AppConfig.OTEL.Endpoint))
+	if conf.AppConfig.OTEL.Insecure {
+		traceOpts = append(traceOpts, otlptracegrpc.WithInsecure())
+	}
+	traceExporter, err := otlptracegrpc.New(ctx, traceOpts...)
+	if err != nil {
+		slog.Error("Failed to create trace exporter", "error", err)
+	}
 
-	// 设置全局 TracerProvider
+	tp := trace.NewTracerProvider(
+		trace.WithBatcher(traceExporter),
+		trace.WithResource(res),
+	)
 	otel.SetTracerProvider(tp)
 
+	// --- 2. Logging 配置 (Direct push to collector) ---
+	var logOpts []otlploggrpc.Option
+	logOpts = append(logOpts, otlploggrpc.WithEndpoint(conf.AppConfig.OTEL.Endpoint))
+	if conf.AppConfig.OTEL.Insecure {
+		logOpts = append(logOpts, otlploggrpc.WithInsecure())
+	}
+	logExporter, err := otlploggrpc.New(ctx, logOpts...)
+	if err != nil {
+		slog.Error("Failed to create log exporter", "error", err)
+	}
+
+	lp := sdklog.NewLoggerProvider(
+		sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)),
+		sdklog.WithResource(res),
+	)
+	global.SetLoggerProvider(lp)
+
+	// --- 3. 整合 slog ---
+	// 同时满足：1. 推送到 Collector; 2. 打印带 TraceID 的 JSON 到 Stdout
+	otelslogHandler := otelslog.NewHandler(conf.AppConfig.OTEL.ServiceName)
+	stdoutHandler := slog.NewJSONHandler(os.Stdout, nil)
+
+	// 使用自定义的 MultiHandler (需要我们稍后定义或简单的组合)
+	// 这里我们先用一个简单的包装：让 logger.OTelHandler 负责注入 ID，
+	// 然后同时分发给 Stdout 和 OTel Collector
+	combinedHandler := logger.NewMultiHandler(
+		stdoutHandler,
+		otelslogHandler,
+	)
+
+	slog.SetDefault(slog.New(logger.NewOTelHandler(combinedHandler)))
+
 	return func() {
-		if err := tp.Shutdown(ctx); err != nil {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := tp.Shutdown(shutdownCtx); err != nil {
 			slog.Error("Error shutting down tracer provider", "error", err)
+		}
+		if err := lp.Shutdown(shutdownCtx); err != nil {
+			slog.Error("Error shutting down logger provider", "error", err)
 		}
 	}
 }
