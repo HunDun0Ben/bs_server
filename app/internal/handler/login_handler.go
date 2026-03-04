@@ -50,14 +50,14 @@ func (h *LoginHandler) Login(cxt *gin.Context) {
 		return
 	}
 	// 查看用户信息
-	user, err := h.userService.FindByLogin(cxt, req.Username, req.Password)
+	user, err := h.userService.FindByLogin(cxt.Request.Context(), req.Username, req.Password)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
 		return
 	}
 
 	clientIP := cxt.ClientIP()
-	mfaRequired, requiredTypes := h.userService.IsHighRisk(cxt, user, clientIP)
+	mfaRequired, requiredTypes := h.userService.IsHighRisk(cxt.Request.Context(), user, clientIP)
 
 	accessTokenStr, refreshTokenStr, claims, err := bsjwt.GenerateTokenPair(*user, mfaRequired, requiredTypes)
 	if err != nil {
@@ -65,18 +65,16 @@ func (h *LoginHandler) Login(cxt *gin.Context) {
 		return
 	}
 
-	// 更新用户登录信息
-	err = h.userService.UpdateLoginInfo(cxt, user.ID, clientIP)
+	// 更新用户登录信息(IP), 非重要性内容, 不影响登录
+	err = h.userService.UpdateLoginInfo(cxt.Request.Context(), user.ID, clientIP)
 	if err != nil {
-		slog.Error("更新用户登录信息失败", "error", err)
-		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
-		return
+		slog.ErrorContext(cxt.Request.Context(), "更新用户登录信息失败", "error", err)
 	}
 
 	// 存储 refresh token 到 redis 中.
-	err = h.authService.StoreRefreshToken(cxt, claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
+	err = h.authService.StoreRefreshToken(cxt.Request.Context(), claims.ID, user.Username, time.Until(claims.ExpiresAt.Time))
 	if err != nil {
-		slog.Error("存储Token失败")
+		slog.ErrorContext(cxt.Request.Context(), "存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
 		return
 	}
@@ -117,7 +115,7 @@ func (h *LoginHandler) RefreshToken(cxt *gin.Context) {
 		return
 	}
 	// 查找对应 jti 的 refresh token 是否存在
-	storedUsername, err := h.authService.IsRefreshTokenValid(cxt, refreshClaims.ID)
+	storedUsername, err := h.authService.IsRefreshTokenValid(cxt.Request.Context(), refreshClaims.ID)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "Refresh Token 已失效或不存在", nil, err))
 		return
@@ -137,7 +135,7 @@ func (h *LoginHandler) RefreshToken(cxt *gin.Context) {
 	}
 
 	// 查找用户信息
-	user, err := h.userService.FindByUsername(cxt, storedUsername)
+	user, err := h.userService.FindByUsername(cxt.Request.Context(), storedUsername)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户名或密码错误", nil, err))
 		return
@@ -150,9 +148,9 @@ func (h *LoginHandler) RefreshToken(cxt *gin.Context) {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "生成token失败", nil, err))
 		return
 	}
-	err = h.authService.StoreRefreshToken(cxt, newClaims.ID, user.Username, time.Until(newClaims.ExpiresAt.Time))
+	err = h.authService.StoreRefreshToken(cxt.Request.Context(), newClaims.ID, user.Username, time.Until(newClaims.ExpiresAt.Time))
 	if err != nil {
-		slog.Error("存储Token失败")
+		slog.ErrorContext(cxt.Request.Context(), "存储Token失败")
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
 		return
 	}
@@ -184,8 +182,10 @@ func (h *LoginHandler) Logout(cxt *gin.Context) {
 		return
 	}
 
-	_ = h.authService.InvalidateRefreshToken(cxt, jti)
-	err := h.authService.InvalidateAccessToken(cxt, jti, remainingTime)
+	if err := h.authService.InvalidateRefreshToken(cxt.Request.Context(), jti); err != nil {
+		slog.WarnContext(cxt.Request.Context(), "Failed to invalidate refresh token during logout", "jti", jti, "error", err)
+	}
+	err := h.authService.InvalidateAccessToken(cxt.Request.Context(), jti, remainingTime)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登出操作失败", nil, err))
 		return
@@ -230,13 +230,13 @@ func (h *LoginHandler) VerifyMFA(cxt *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.FindByUsername(cxt, customClaims.Username)
+	user, err := h.userService.FindByUsername(cxt.Request.Context(), customClaims.Username)
 	if err != nil || user == nil {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "用户不存在", nil, err))
 		return
 	}
 
-	secret, enabled, err := h.userService.GetMFAInfo(cxt, user.Username)
+	secret, enabled, err := h.userService.GetMFAInfo(cxt.Request.Context(), user.Username)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "获取 MFA 信息失败", nil, err))
 		return
@@ -253,7 +253,7 @@ func (h *LoginHandler) VerifyMFA(cxt *gin.Context) {
 		providerType = customClaims.RequiredTypes[0]
 	}
 
-	valid, err := h.mfaVerificationService.VerifyCode(cxt, providerType, secret, req.Code)
+	valid, err := h.mfaVerificationService.VerifyCode(cxt.Request.Context(), providerType, secret, req.Code)
 	if err != nil || !valid {
 		cxt.Error(bsvo.NewAppError(http.StatusUnauthorized, "MFA 验证失败", nil, err))
 		return
@@ -269,18 +269,22 @@ func (h *LoginHandler) VerifyMFA(cxt *gin.Context) {
 	// 作废旧的 Access Token
 	remainingTime := time.Until(customClaims.ExpiresAt.Time)
 	if remainingTime > 0 {
-		_ = h.authService.InvalidateAccessToken(cxt, customClaims.ID, remainingTime)
+		if err := h.authService.InvalidateAccessToken(cxt.Request.Context(), customClaims.ID, remainingTime); err != nil {
+			slog.WarnContext(cxt.Request.Context(), "Failed to invalidate old access token after MFA", "jti", customClaims.ID, "error", err)
+		}
 	}
 
 	// 从 cookie 获取并作废旧的 Refresh Token
 	if oldRefreshTokenStr, err := cxt.Cookie("refreshToken"); err == nil {
 		if oldRefreshClaims, err := bsjwt.ParseToken(oldRefreshTokenStr); err == nil {
-			_ = h.authService.InvalidateRefreshToken(cxt, oldRefreshClaims.ID)
+			if err := h.authService.InvalidateRefreshToken(cxt.Request.Context(), oldRefreshClaims.ID); err != nil {
+				slog.WarnContext(cxt.Request.Context(), "Failed to invalidate old refresh token after MFA", "jti", oldRefreshClaims.ID, "error", err)
+			}
 		}
 	}
 
 	// 存储新的 refresh token 到 redis
-	err = h.authService.StoreRefreshToken(cxt, newClaims.ID, user.Username, time.Until(newClaims.ExpiresAt.Time))
+	err = h.authService.StoreRefreshToken(cxt.Request.Context(), newClaims.ID, user.Username, time.Until(newClaims.ExpiresAt.Time))
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
 		return

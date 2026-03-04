@@ -12,9 +12,8 @@ import (
 func TestLoadAllConfig_WithMockFS(t *testing.T) {
 	// 1. 准备内存文件系统
 	mockFS := afero.NewMemMapFs()
-	oldFs := fs
-	fs = mockFS
-	defer func() { fs = oldFs }()
+	SetFs(mockFS)
+	defer SetFs(afero.NewOsFs())
 
 	// 2. 创建模拟配置目录
 	mockDir := "/etc/bs_server/conf"
@@ -23,6 +22,10 @@ func TestLoadAllConfig_WithMockFS(t *testing.T) {
 	appContent := `
 jwt:
   secret: "mock-secret"
+otel:
+  enable: true
+  strict: true
+  endpoint: "localhost:4317"
 `
 	_ = afero.WriteFile(mockFS, filepath.Join(mockDir, "application.yaml"), []byte(appContent), 0644)
 
@@ -30,11 +33,14 @@ jwt:
 	os.Setenv("APP_CONF", mockDir)
 	defer os.Unsetenv("APP_CONF")
 
-	err := loadAllConfig()
+	err := InitConfig()
 
 	// 4. 断言
 	assert.NoError(t, err)
-	assert.Equal(t, "mock-secret", GlobalViper.GetString("jwt.secret"))
+	assert.Equal(t, "mock-secret", AppConfig.JWT.Secret)
+	assert.True(t, AppConfig.OTEL.Enable)
+	assert.True(t, AppConfig.OTEL.Strict)
+	assert.Equal(t, "localhost:4317", AppConfig.OTEL.Endpoint)
 }
 
 func TestLoadAllConfig_DefaultPathMissing(t *testing.T) {
@@ -51,9 +57,8 @@ func TestLoadAllConfig_DefaultPathMissing(t *testing.T) {
 
 func TestLoadConfigFiles_CorrectNamespace(t *testing.T) {
 	mockFS := afero.NewMemMapFs()
-	oldFs := fs
-	fs = mockFS
-	defer func() { fs = oldFs }()
+	SetFs(mockFS)
+	defer SetFs(afero.NewOsFs())
 
 	mockDir := "/tmp/testconf"
 	_ = mockFS.MkdirAll(mockDir, 0755)

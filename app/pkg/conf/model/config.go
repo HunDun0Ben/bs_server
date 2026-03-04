@@ -37,6 +37,7 @@ type RedisConfig struct {
 
 type OTELConfig struct {
 	Enable      bool   `mapstructure:"enable"`
+	Strict      bool   `mapstructure:"strict"`
 	ServiceName string `mapstructure:"service_name"`
 	Version     string `mapstructure:"version"`
 	Endpoint    string `mapstructure:"endpoint"`
