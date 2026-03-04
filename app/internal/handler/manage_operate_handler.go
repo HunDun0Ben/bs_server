@@ -73,7 +73,7 @@ func (h *ManageHandler) InitInsect(cxt *gin.Context) {
 		for _, colCell := range row {
 			a += colCell + "\t"
 		}
-		slog.InfoContext(cxt.Request.Context(), a)
+slog.InfoContext(cxt.Request.Context(), "excel row data", "data", a)
 	}
 	slog.InfoContext(cxt.Request.Context(), "excel head", "head", headstr)
 }
