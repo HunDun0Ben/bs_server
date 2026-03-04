@@ -20,10 +20,17 @@ var (
 	fs          afero.Fs = afero.NewOsFs()
 )
 
+// SetFs 允许外部设置 GlobalViper 使用的文件系统（主要用于测试注入 mock fs）
+func SetFs(newFs afero.Fs) {
+	fs = newFs
+	GlobalViper.SetFs(fs)
+}
+
 // InitConfig 初始化全局配置.
 func InitConfig() error {
 	// 启用环境变量支持覆盖配置文件
 	GlobalViper.AutomaticEnv()
+	GlobalViper.SetFs(fs)
 	if err := loadAllConfig(); err != nil {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
@@ -66,6 +73,7 @@ func loadConfigFiles(dir string) error {
 				cfgNamespace := strings.Split(info.Name(), ".")[0]
 				// 根据每一个 yaml 文件, 创建一个对应的 viper 实例
 				v := viper.New()
+				v.SetFs(fs)
 				// 设置文件路径并读取配置
 				// v.SetConfigFile(configName)
 

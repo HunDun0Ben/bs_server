@@ -54,7 +54,11 @@ func main() {
 		os.Exit(1)
 	}
 	// 初始化 OTel (Tracing + Logging)
-	otel_clean := initOTel()
+	otel_clean, err := initOTel()
+	if err != nil {
+		slog.Error("Failed to initialize OpenTelemetry", "error", err)
+		os.Exit(1)
+	}
 	defer otel_clean()
 	// 连接数据库
 	loadDataBase()
@@ -62,11 +66,11 @@ func main() {
 	startServer()
 }
 
-func initOTel() func() {
+func initOTel() (func(), error) {
 	if !conf.AppConfig.OTEL.Enable {
 		// 如果未开启 OTel，依然使用基础的 OTelHandler (仅注入 ID 到 Stdout)
 		slog.SetDefault(slog.New(logger.NewOTelHandler(slog.NewJSONHandler(os.Stdout, nil))))
-		return func() {}
+		return func() {}, nil
 	}
 
 	ctx := context.Background()
@@ -82,16 +86,21 @@ func initOTel() func() {
 	if conf.AppConfig.OTEL.Insecure {
 		traceOpts = append(traceOpts, otlptracegrpc.WithInsecure())
 	}
+	var tp *trace.TracerProvider
 	traceExporter, err := otlptracegrpc.New(ctx, traceOpts...)
 	if err != nil {
-		slog.Error("Failed to create trace exporter", "error", err)
+		// 严格要求开启 Otel
+		if conf.AppConfig.OTEL.Strict {
+			return nil, fmt.Errorf("failed to create trace exporter in strict mode: %w", err)
+		}
+		slog.Error("Failed to create trace exporter, continuing in non-strict mode", "error", err)
+	} else {
+		tp = trace.NewTracerProvider(
+			trace.WithBatcher(traceExporter),
+			trace.WithResource(res),
+		)
+		otel.SetTracerProvider(tp)
 	}
-
-	tp := trace.NewTracerProvider(
-		trace.WithBatcher(traceExporter),
-		trace.WithResource(res),
-	)
-	otel.SetTracerProvider(tp)
 
 	// --- 2. Logging 配置 (Direct push to collector) ---
 	var logOpts []otlploggrpc.Option
@@ -99,42 +108,50 @@ func initOTel() func() {
 	if conf.AppConfig.OTEL.Insecure {
 		logOpts = append(logOpts, otlploggrpc.WithInsecure())
 	}
+	var lp *sdklog.LoggerProvider
 	logExporter, err := otlploggrpc.New(ctx, logOpts...)
 	if err != nil {
-		slog.Error("Failed to create log exporter", "error", err)
+		if conf.AppConfig.OTEL.Strict {
+			return nil, fmt.Errorf("failed to create log exporter in strict mode: %w", err)
+		}
+		slog.Error("Failed to create log exporter, continuing in non-strict mode", "error", err)
+	} else {
+		lp = sdklog.NewLoggerProvider(
+			sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)),
+			sdklog.WithResource(res),
+		)
+		global.SetLoggerProvider(lp)
 	}
-
-	lp := sdklog.NewLoggerProvider(
-		sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)),
-		sdklog.WithResource(res),
-	)
-	global.SetLoggerProvider(lp)
 
 	// --- 3. 整合 slog ---
 	// 同时满足：1. 推送到 Collector; 2. 打印带 TraceID 的 JSON 到 Stdout
-	otelslogHandler := otelslog.NewHandler(conf.AppConfig.OTEL.ServiceName)
 	stdoutHandler := slog.NewJSONHandler(os.Stdout, nil)
+	var combinedHandler slog.Handler = stdoutHandler
 
-	// 使用自定义的 MultiHandler (需要我们稍后定义或简单的组合)
-	// 这里我们先用一个简单的包装：让 logger.OTelHandler 负责注入 ID，
-	// 然后同时分发给 Stdout 和 OTel Collector
-	combinedHandler := logger.NewMultiHandler(
-		stdoutHandler,
-		otelslogHandler,
-	)
+	if lp != nil {
+		otelslogHandler := otelslog.NewHandler(conf.AppConfig.OTEL.ServiceName)
+		combinedHandler = logger.NewMultiHandler(
+			stdoutHandler,
+			otelslogHandler,
+		)
+	}
 
 	slog.SetDefault(slog.New(logger.NewOTelHandler(combinedHandler)))
 
 	return func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := tp.Shutdown(shutdownCtx); err != nil {
-			slog.Error("Error shutting down tracer provider", "error", err)
+		if tp != nil {
+			if err := tp.Shutdown(shutdownCtx); err != nil {
+				slog.Error("Error shutting down tracer provider", "error", err)
+			}
 		}
-		if err := lp.Shutdown(shutdownCtx); err != nil {
-			slog.Error("Error shutting down logger provider", "error", err)
+		if lp != nil {
+			if err := lp.Shutdown(shutdownCtx); err != nil {
+				slog.Error("Error shutting down logger provider", "error", err)
+			}
 		}
-	}
+	}, nil
 }
 
 func loadDataBase() {

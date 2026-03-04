@@ -10,6 +10,7 @@ jwt:
   refreshExpire: 144h
 otel:
   enable: true
+  strict: true
   service_name: bs_server
   version: 1.0.0
   endpoint: localhost:4317
