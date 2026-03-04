@@ -65,12 +65,10 @@ func (h *LoginHandler) Login(cxt *gin.Context) {
 		return
 	}
 
-	// 更新用户登录信息
+	// 更新用户登录信息(IP), 非重要性内容, 不影响登录
 	err = h.userService.UpdateLoginInfo(cxt.Request.Context(), user.ID, clientIP)
 	if err != nil {
 		slog.ErrorContext(cxt.Request.Context(), "更新用户登录信息失败", "error", err)
-		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登录失败", nil, err))
-		return
 	}
 
 	// 存储 refresh token 到 redis 中.
@@ -184,7 +182,9 @@ func (h *LoginHandler) Logout(cxt *gin.Context) {
 		return
 	}
 
-	_ = h.authService.InvalidateRefreshToken(cxt.Request.Context(), jti)
+	if err := h.authService.InvalidateRefreshToken(cxt.Request.Context(), jti); err != nil {
+		slog.WarnContext(cxt.Request.Context(), "Failed to invalidate refresh token during logout", "jti", jti, "error", err)
+	}
 	err := h.authService.InvalidateAccessToken(cxt.Request.Context(), jti, remainingTime)
 	if err != nil {
 		cxt.Error(bsvo.NewAppError(http.StatusInternalServerError, "登出操作失败", nil, err))
@@ -269,13 +269,17 @@ func (h *LoginHandler) VerifyMFA(cxt *gin.Context) {
 	// 作废旧的 Access Token
 	remainingTime := time.Until(customClaims.ExpiresAt.Time)
 	if remainingTime > 0 {
-		_ = h.authService.InvalidateAccessToken(cxt.Request.Context(), customClaims.ID, remainingTime)
+		if err := h.authService.InvalidateAccessToken(cxt.Request.Context(), customClaims.ID, remainingTime); err != nil {
+			slog.WarnContext(cxt.Request.Context(), "Failed to invalidate old access token after MFA", "jti", customClaims.ID, "error", err)
+		}
 	}
 
 	// 从 cookie 获取并作废旧的 Refresh Token
 	if oldRefreshTokenStr, err := cxt.Cookie("refreshToken"); err == nil {
 		if oldRefreshClaims, err := bsjwt.ParseToken(oldRefreshTokenStr); err == nil {
-			_ = h.authService.InvalidateRefreshToken(cxt.Request.Context(), oldRefreshClaims.ID)
+			if err := h.authService.InvalidateRefreshToken(cxt.Request.Context(), oldRefreshClaims.ID); err != nil {
+				slog.WarnContext(cxt.Request.Context(), "Failed to invalidate old refresh token after MFA", "jti", oldRefreshClaims.ID, "error", err)
+			}
 		}
 	}
 
