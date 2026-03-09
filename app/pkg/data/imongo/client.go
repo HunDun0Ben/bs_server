@@ -32,7 +32,13 @@ func Client() *mongo.Client {
 			panic("MongoDB URI not configured")
 		}
 
-		cliOptions := options.Client().ApplyURI(uri).SetMonitor(otelmongo.NewMonitor())
+		cliOptions := options.Client().ApplyURI(uri)
+
+		// 增加 OTel Hook
+		if conf.AppConfig.OTEL.Enable {
+			cliOptions.SetMonitor(otelmongo.NewMonitor())
+		}
+
 		if conf.GlobalViper.GetBool("mongodb.debug") {
 			cliOptions.SetLoggerOptions(options.Logger().
 				SetComponentLevel(
