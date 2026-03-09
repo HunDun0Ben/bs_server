@@ -8,11 +8,11 @@
 
 ### 2.1 Redis 监测 (otelredis)
 
-- **方案**：使用 `go-redis/redis/otelredis` 官方插件。
+- **方案**：使用 `github.com/go-redis/redis/extra/redisotel/v8` 官方插件。
 - **修改位置**：`app/pkg/data/iredis/client.go`。
 - **实现细节**：`
     ```go
-    rdb.AddHook(otelredis.NewHook())
+    rdb.AddHook(redisotel.NewTracingHook())
     ```
 
 ### 2.2 图像处理流水线重构 (重点)
@@ -51,7 +51,7 @@
 
 ## 3. 依赖变更
 
-- 新增：`go.opentelemetry.io/contrib/instrumentation/github.com/go-redis/redis/otelredis/v8`
+- 新增：`github.com/go-redis/redis/extra/redisotel/v8`
 
 ## 4. 实施路线图
 
