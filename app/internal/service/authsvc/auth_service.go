@@ -38,11 +38,11 @@ type AuthService interface {
 }
 
 type authService struct {
-	repo    repository.AuthRepository
+	repo    repository.RedisRepository
 	userSvc usersvc.UserService
 }
 
-func NewAuthService(repo repository.AuthRepository, userSvc usersvc.UserService) AuthService {
+func NewAuthService(repo repository.RedisRepository, userSvc usersvc.UserService) AuthService {
 	return &authService{
 		repo:    repo,
 		userSvc: userSvc,
