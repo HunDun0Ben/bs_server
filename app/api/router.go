@@ -25,7 +25,7 @@ func InitRoute(engine *gin.Engine) {
 
 	// --- 1. Repository Layer ---
 	userRepo := repository.NewUserRepository(&imongo.MongoCollection{Col: imongo.BizDataBase().Collection("user")})
-	authRepo := repository.NewAuthRepository(iredis.GetRDB())
+	authRepo := repository.NewRedisRepository(iredis.GetRDB())
 	butterflyRepo := repository.NewButterflyRepository(imongo.BizDataBase())
 
 	// --- 2. Service Layer ---
