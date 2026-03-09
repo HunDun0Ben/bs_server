@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/go-redis/redis/extra/redisotel/v8"
 	"github.com/go-redis/redis/v8"
 
 	"github.com/HunDun0Ben/bs_server/app/pkg/conf"
@@ -25,6 +26,11 @@ func GetRDB() *redis.Client {
 			DB:       cfg.DB,
 			PoolSize: cfg.PoolSize,
 		})
+
+		// 增加 OTel Hook
+		if conf.AppConfig.OTEL.Enable {
+			rdb.AddHook(redisotel.NewTracingHook())
+		}
 
 		// 检查连接
 		if err := rdb.Ping(context.Background()).Err(); err != nil {
