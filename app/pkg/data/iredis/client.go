@@ -3,6 +3,7 @@ package iredis
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -27,14 +28,17 @@ func GetRDB() *redis.Client {
 			PoolSize: cfg.PoolSize,
 		})
 
-		// Enable tracing instrumentation.
-		if err := redisotel.InstrumentTracing(rdb); err != nil {
-			panic(err)
-		}
+		// 增加 OTel Hook
+		if conf.AppConfig.OTEL.Enable {
+			// Enable tracing instrumentation.
+			if err := redisotel.InstrumentTracing(rdb); err != nil {
+				slog.Error("failed to instrument tracing for redis", "error", err)
+			}
 
-		// Enable metrics instrumentation.
-		if err := redisotel.InstrumentMetrics(rdb); err != nil {
-			panic(err)
+			// Enable metrics instrumentation.
+			if err := redisotel.InstrumentMetrics(rdb); err != nil {
+				slog.Error("failed to instrument metrics for redis", "error", err)
+			}
 		}
 
 		// 检查连接
