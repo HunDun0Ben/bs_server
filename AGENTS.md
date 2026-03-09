@@ -40,6 +40,8 @@ bs_server/
 - **错误处理**: 统一使用 `bsvo.AppError` 类型进行错误上报，由中间件统一处理。
 - **代码格式化**: 在提交前务必运行 `make format`，它会使用 `gofmt` 和 `gci` 统一代码风格和 import 顺序。
 - **内存管理**: 在 `app/pkg/gocv` 中处理 `gocv.Mat` 时，必须遵循“谁创建，谁释放 (`defer mat.Close()`)”的原则。
+- **Service 链路追踪**: Service 层方法必须将 `context.Context` 作为第一个参数，以确保 Trace 链路不中断。
+- **日志关联**: 在 Service 层记录日志时，必须严格使用上下文感知的方法 (如 `slog.InfoContext`)，以保证日志包含 `trace_id`。
 
 ## 关键命令
 
