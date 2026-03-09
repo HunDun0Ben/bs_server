@@ -18,7 +18,7 @@ type redisAuthRepo struct {
 	rdb *redis.Client
 }
 
-func NewAuthRepository(rdb *redis.Client) RedisRepository {
+func NewRedisRepository(rdb *redis.Client) RedisRepository {
 	return &redisAuthRepo{rdb: rdb}
 }
 
