@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
-type AuthRepository interface {
+type RedisRepository interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, key string) (int64, error)
@@ -18,7 +18,7 @@ type redisAuthRepo struct {
 	rdb *redis.Client
 }
 
-func NewAuthRepository(rdb *redis.Client) AuthRepository {
+func NewAuthRepository(rdb *redis.Client) RedisRepository {
 	return &redisAuthRepo{rdb: rdb}
 }
 
