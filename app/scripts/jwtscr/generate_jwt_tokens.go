@@ -40,9 +40,9 @@ func main() {
 	slog.Info("User info for token generation", "user", u)
 
 	conf.AppConfig.JWT.Expire = time.Duration(accessTokenExpireSeconds) * time.Second
-	atok, rftok, err, rfErr := bsjwt.GenerateTokenPair(u, false, nil)
-	if err != nil || rfErr != nil {
-		slog.Error("Failed to generate token pair", "access_token_error", err, "refresh_token_error", rfErr)
+	atok, rftok, _, err := bsjwt.GenerateTokenPair(u, false, nil)
+	if err != nil {
+		slog.Error("Failed to generate token pair", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("Generated tokens", slog.String("accessToken", atok),
