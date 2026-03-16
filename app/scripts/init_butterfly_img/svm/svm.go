@@ -11,12 +11,21 @@ import "C"
 import (
 	"encoding/csv"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"strconv"
-	"time"
 	"unsafe"
+
+	"github.com/spf13/pflag"
 )
+
+var (
+	dataPath string
+)
+
+func init() {
+	pflag.StringVarP(&dataPath, "data", "d", "../script/data.csv", "Path to the training data CSV file")
+}
 
 // 读取CSV文件，返回 bow 矩阵和标签数组.
 func readCSV(file string) ([][]float64, []float64, error) {
@@ -117,9 +126,8 @@ func createSvmNode(feature []float64) *C.struct_svm_node {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
-	features, labels, err := readCSV("../script/data.csv")
+	pflag.Parse()
+	features, labels, err := readCSV(dataPath)
 	if err != nil {
 		panic(err)
 	}
@@ -166,14 +174,16 @@ func main() {
 	defer C.free(unsafe.Pointer(x))
 
 	// 用于跟踪所有分配的 svm_node，以便最后释放
+	xArr := (*[1 << 30]*C.struct_svm_node)(unsafe.Pointer(x))[:l:l]
 	var allocatedNodes []*C.struct_svm_node
 	defer func() {
 		for _, node := range allocatedNodes {
-			C.free(unsafe.Pointer(node))
+			if node != nil {
+				C.free(unsafe.Pointer(node))
+			}
 		}
 	}()
 
-	xArr := (*[1 << 30]*C.struct_svm_node)(unsafe.Pointer(x))[:l:l]
 	for i := 0; i < int(l); i++ {
 		node := createSvmNode(trainFeatures[i])
 		xArr[i] = node

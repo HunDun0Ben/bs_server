@@ -13,7 +13,7 @@ go run app/scripts/jwtscr/generate_jwt_tokens.go [flags]
 | Flag                     | Shorthand | Description                              | Default      |
 | ------------------------ | --------- | ---------------------------------------- | ------------ |
 | `--expire`               | `-t`      | Access token expiration time in seconds  | 10           |
-| `--refresh token expire` | `-f`      | Refresh token expiration time in seconds | 10           |
+| `--refresh-token-expire` | `-f`      | Refresh token expiration time in seconds | 10           |
 | `--username`             | `-u`      | Username for the token                   | "username"   |
 | `--roles`                | `-r`      | User roles (comma separated)             | "admin,user" |
 
