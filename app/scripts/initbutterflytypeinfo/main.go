@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"image/color"
-	"log"
 	"log/slog"
+	"os"
 
 	"github.com/spf13/pflag"
 	"github.com/xuri/excelize/v2"
@@ -36,7 +36,8 @@ func main() {
 	pflag.Parse()
 
 	if err := conf.InitConfig(); err != nil {
-		log.Fatalf("Failed to initialize config: %v", err)
+		slog.Error("Failed to initialize config", "error", err)
+		os.Exit(1)
 	}
 
 	repo := repository.NewButterflyRepository(imongo.BizDataBase())
@@ -52,7 +53,7 @@ func main() {
 	case "display-batch":
 		DisplayResizedImages(svc)
 	default:
-		fmt.Printf("Unknown mode: %s\n", mode)
+		slog.Warn("Unknown mode", "mode", mode)
 		pflag.Usage()
 	}
 }
@@ -60,62 +61,75 @@ func main() {
 func InitButterflyTypes(svc butterflysvc.ButterflyService) {
 	count, err := svc.CountTypes(context.Background())
 	if err != nil {
-		log.Fatalf("获取数据数量失败: %v", err)
+		slog.Error("Failed to count types", "error", err)
+		os.Exit(1)
 	}
 	if count > 0 {
-		slog.Info("已经初始化过数据")
+		slog.Info("Already initialized data")
 		return
 	}
 	list, err := loadTypeInfoFromExcel(filepath)
 	if err != nil {
-		log.Fatalf("加载信息失败: %v", err)
+		slog.Error("Failed to load information", "error", err)
+		os.Exit(1)
 	}
 	if err := svc.InitTypes(context.Background(), list); err != nil {
-		log.Fatalf("初始化蝴蝶信息失败: %v", err)
+		slog.Error("Failed to initialize butterfly information", "error", err)
+		os.Exit(1)
 	}
-	fmt.Println("Butterfly types initialized successfully")
+	slog.Info("Butterfly types initialized successfully")
 }
-
 func ResizeImages(svc butterflysvc.ButterflyService) {
 	typeList, err := svc.GetTypes(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to get types: %v", err)
+		slog.Error("Failed to get types", "error", err)
+		os.Exit(1)
 	}
 
 	for _, v := range typeList {
 		res, err := svc.GetImgs(context.Background(), bson.M{"file_name": bson.M{"$regex": v.LatinName}}) // Using LatinName as type marker
 		if err != nil {
-			log.Printf("Failed to get images for type %s: %v", v.ChineseName, err)
+			slog.Error("Failed to get images for type", "type", v.ChineseName, "error", err)
 			continue
 		}
 		slog.Info("length of img list", "type", v.ChineseName, "len", len(res))
 		for _, info := range res {
-			mat := imgutils.ResizeWithPadding(*imgutils.GetMaskImg(info), 200, 200, color.RGBA{0, 0, 0, 0})
-			defer mat.Close()
+			func() {
+				src := imgutils.GetMaskImg(info)
+				defer src.Close()
 
-			resized := file.ResizedButteryflyFile{
-				FileStoreData: imongo.FileStoreData{
-					Content: mat.ToBytes(),
-				},
-				Col:  mat.Cols(),
-				Row:  mat.Rows(),
-				Type: v.LatinName,
-			}
-			err := svc.InsertResizedImg(context.Background(), &resized)
-			if err != nil {
-				log.Printf("Failed to insert resized image for type %s: %v", v.ChineseName, err)
-			}
+				mat := imgutils.ResizeWithPadding(*src, 200, 200, color.RGBA{0, 0, 0, 0})
+				defer mat.Close()
+
+				resized := file.ResizedButteryflyFile{
+					FileStoreData: imongo.FileStoreData{
+						Content: mat.ToBytes(),
+					},
+					Col:  mat.Cols(),
+					Row:  mat.Rows(),
+					Type: v.LatinName,
+				}
+				err := svc.InsertResizedImg(context.Background(), &resized)
+				if err != nil {
+					slog.Error("Failed to insert resized image", "type", v.ChineseName, "error", err)
+				}
+			}()
 		}
 	}
-	fmt.Println("Image resizing completed")
+	slog.Info("Image resizing completed")
 }
 
 func ResizeImgOne(svc butterflysvc.ButterflyService) {
 	res, err := svc.FindImg(context.Background(), bson.M{})
 	if err != nil || res == nil {
-		log.Fatalf("No image found: %v", err)
+		slog.Error("No image found", "error", err)
+		os.Exit(1)
 	}
-	mat := imgutils.ResizeWithPadding(*imgutils.GetMaskImg(*res), 200, 200, color.RGBA{0, 0, 0, 0})
+
+	src := imgutils.GetMaskImg(*res)
+	defer src.Close()
+
+	mat := imgutils.ResizeWithPadding(*src, 200, 200, color.RGBA{0, 0, 0, 0})
 	defer mat.Close()
 
 	slog.Info("Mat type", "type", mat.Type().String())
@@ -127,21 +141,25 @@ func ResizeImgOne(svc butterflysvc.ButterflyService) {
 func DisplayResizedImages(svc butterflysvc.ButterflyService) {
 	list, err := svc.GetResizedImgs(context.Background(), bson.M{})
 	if err != nil {
-		log.Fatalf("Failed to get resized list: %v", err)
+		slog.Error("Failed to get resized list", "error", err)
+		os.Exit(1)
 	}
 
 	for i := 0; i < 10 && i < len(list); i++ {
-		mat, err := gocv.NewMatFromBytes(200, 200, gocv.MatTypeCV8UC3, list[i].Content)
-		if err != nil {
-			log.Printf("Error creating mat for index %d: %v", i, err)
-			continue
-		}
-		defer mat.Close()
+		func() {
+			mat, err := gocv.NewMatFromBytes(200, 200, gocv.MatTypeCV8UC3, list[i].Content)
+			if err != nil {
+				slog.Error("Error creating mat for index", "index", i, "error", err)
+				return
+			}
+			defer mat.Close()
 
-		fmt.Printf("Displaying image %d, type: %d\n", i, mat.Type())
-		win := ui.NewProcessingWindow(fmt.Sprintf("Resize Image %d", i))
-		win.LoadImageFromMat(mat)
-		win.Display()
+			slog.Info("Displaying image", "index", i, "type", mat.Type())
+			win := ui.NewProcessingWindow(fmt.Sprintf("Resize Image %d", i))
+			defer win.Close()
+			win.LoadImageFromMat(mat)
+			win.Display()
+		}()
 	}
 }
 

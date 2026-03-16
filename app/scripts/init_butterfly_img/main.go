@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
-	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -36,7 +34,7 @@ var (
 
 func init() {
 	pflag.StringVarP(&basePath, "path", "p", "/home/workspace/data/leedsbutterfly", "Base path for butterfly data")
-	pflag.StringVarP(&mode, "mode", "m", "verify", "Operation mode: insert, verify, display, shift, kmeans")
+	pflag.StringVarP(&mode, "mode", "m", "verify", "Operation mode: insert, verify, display, sift, kmeans")
 	pflag.IntVarP(&k, "clusters", "k", 1024, "Number of clusters for KMeans")
 	pflag.IntVarP(&iterations, "iterations", "i", 10, "KMeans iterations")
 }
@@ -45,7 +43,8 @@ func main() {
 	pflag.Parse()
 
 	if err := conf.InitConfig(); err != nil {
-		log.Fatalf("Failed to initialize config: %v", err)
+		slog.Error("Failed to initialize config", "error", err)
+		os.Exit(1)
 	}
 
 	repo := repository.NewButterflyRepository(mcli.BizDataBase())
@@ -58,12 +57,12 @@ func main() {
 		VerifyImgsAndSeg()
 	case "display":
 		DisplayImg(svc)
-	case "shift":
-		UpdateShiftFeature(svc)
+	case "sift":
+		UpdateSiftFeature(svc)
 	case "kmeans":
 		Kmeans(svc)
 	default:
-		fmt.Printf("Unknown mode: %s\n", mode)
+		slog.Warn("Unknown mode", "mode", mode)
 		pflag.Usage()
 	}
 }
@@ -73,17 +72,21 @@ func DisplayImg(svc butterflysvc.ButterflyService) {
 	bf, err := svc.FindImg(context.TODO(), bson.M{"path": path})
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			fmt.Println("Document not found")
+			slog.Warn("Document not found", "path", path)
 			return
 		}
-		log.Fatalf("Find error: %v", err)
+		slog.Error("Find error", "error", err)
+		os.Exit(1)
 	}
-	fmt.Printf("\tbf = %s, %s\n", bf.FileName, bf.Path)
+	slog.Info("Found butterfly", "fileName", bf.FileName, "path", bf.Path)
 
 	win := ui.NewProcessingWindow("Butterfly Image")
+	defer win.Close()
+
 	img, err := gocv.IMDecode(bf.Content, gocv.IMReadColor)
 	if err != nil {
-		log.Fatalf("Decode error: %v", err)
+		slog.Error("Decode error", "error", err)
+		os.Exit(1)
 	}
 	defer img.Close()
 	win.LoadImageFromMat(img)
@@ -98,13 +101,13 @@ func InsertImg() {
 	err := filepath.WalkDir(imgsPath, func(path string, d fs.DirEntry, err error) error {
 		segSuf := "_seg0"
 		if err != nil {
-			fmt.Println(err)
+			slog.Error("WalkDir error", "path", path, "error", err)
 			return nil
 		}
 		if !d.IsDir() {
 			info, err := d.Info()
 			if err != nil {
-				fmt.Println(err)
+				slog.Error("Failed to get file info", "path", path, "error", err)
 				return nil
 			}
 			ext := filepath.Ext(info.Name())
@@ -114,27 +117,28 @@ func InsertImg() {
 
 			content, err := os.ReadFile(path)
 			if err != nil {
-				log.Printf("Error reading image %s: %v", path, err)
+				slog.Error("Error reading image", "path", path, "error", err)
 				return nil
 			}
 			maskContent, err := os.ReadFile(fullSegPath)
 			if err != nil {
-				log.Printf("Error reading mask %s: %v", fullSegPath, err)
+				slog.Error("Error reading mask", "path", fullSegPath, "error", err)
 				return nil
 			}
 
-			fmt.Printf("Inserting: %s\n", info.Name())
+			slog.Info("Inserting image", "name", info.Name())
 			bf := file.NewButterflyFileWithContent(info.Name(), ext, path, content, maskContent)
 			insertResult, err := collection.InsertOne(context.Background(), bf)
 			if err != nil {
-				log.Fatalf("Insert error: %v", err)
+				slog.Error("Insert error", "path", path, "error", err)
+				return nil
 			}
-			fmt.Println("Inserted document ID:", insertResult.InsertedID)
+			slog.Info("Inserted document", "id", insertResult.InsertedID)
 		}
 		return nil
 	})
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("WalkDir failed", "error", err)
 	}
 }
 
@@ -145,13 +149,13 @@ func VerifyImgsAndSeg() {
 	err := filepath.WalkDir(imgsPath, func(_ string, d fs.DirEntry, err error) error {
 		segSuf := "_seg0"
 		if err != nil {
-			fmt.Println(err)
+			slog.Error("WalkDir error", "error", err)
 			return nil
 		}
 		if !d.IsDir() {
 			info, err := d.Info()
 			if err != nil {
-				fmt.Println(err)
+				slog.Error("Failed to get file info", "error", err)
 				return nil
 			}
 			ext := filepath.Ext(info.Name())
@@ -161,34 +165,35 @@ func VerifyImgsAndSeg() {
 			_, err = os.Stat(fullSegPath)
 			if os.IsNotExist(err) {
 				count++
-				fmt.Printf("File Seg not exist: %s\n", fullSegPath)
+				slog.Warn("Segmentation file not found", "path", fullSegPath)
 			}
 		}
 		return nil
 	})
 	if count == 0 {
-		fmt.Println("All images and segmentations are verified")
+		slog.Info("All images and segmentations are verified")
 	} else {
-		fmt.Printf("Found %d missing segmentations\n", count)
+		slog.Info("Verification completed", "missing_count", count)
 	}
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("VerifyImgsAndSeg failed", "error", err)
 	}
 }
 
-func UpdateShiftFeature(svc butterflysvc.ButterflyService) {
+func UpdateSiftFeature(svc butterflysvc.ButterflyService) {
 	sift := gocv.NewSIFT()
 	defer sift.Close()
 	resizeList, err := svc.GetResizedImgs(context.Background(), bson.M{})
 	if err != nil {
-		log.Fatalf("Failed to get resized images: %v", err)
+		slog.Error("Failed to get resized images", "error", err)
+		return
 	}
 
 	for _, item := range resizeList {
 		func() {
 			mat, err := gocv.NewMatFromBytes(200, 200, gocv.MatTypeCV8UC3, item.Content)
 			if err != nil {
-				log.Printf("Error creating mat for item %s: %v", item.ID, err)
+				slog.Error("Error creating mat for item", "id", item.ID, "error", err)
 				return
 			}
 			defer mat.Close()
@@ -197,17 +202,19 @@ func UpdateShiftFeature(svc butterflysvc.ButterflyService) {
 			defer dst.Close()
 			gocv.CvtColor(mat, &dst, gocv.ColorBGRToGray)
 
-			_, describe := sift.DetectAndCompute(dst, gocv.NewMat())
+			mask := gocv.NewMat()
+			defer mask.Close()
+			_, describe := sift.DetectAndCompute(dst, mask)
 			defer describe.Close()
 
 			if describe.Empty() {
-				log.Printf("No features found for item %s", item.ID)
+				slog.Warn("No features found for item", "id", item.ID)
 				return
 			}
 
 			dbmat, err := imgutils.Mat2DBMat(&describe)
 			if err != nil {
-				log.Printf("Error converting mat to DBMat for item %s: %v", item.ID, err)
+				slog.Error("Error converting mat to DBMat for item", "id", item.ID, "error", err)
 				return
 			}
 
@@ -217,11 +224,11 @@ func UpdateShiftFeature(svc butterflysvc.ButterflyService) {
 				},
 			})
 			if err != nil {
-				log.Printf("Error updating item %s: %v", item.ID, err)
+				slog.Error("Error updating item", "id", item.ID, "error", err)
 			}
 		}()
 	}
-	fmt.Println("SIFT features update completed")
+	slog.Info("SIFT features update completed")
 }
 
 func Kmeans(svc butterflysvc.ButterflyService) {
@@ -229,23 +236,26 @@ func Kmeans(svc butterflysvc.ButterflyService) {
 	var rows int
 	resizeList, err := svc.GetResizedImgs(context.Background(), bson.M{})
 	if err != nil {
-		log.Fatalf("Failed to get resized images: %v", err)
+		slog.Error("Failed to get resized images", "error", err)
+		os.Exit(1)
 	}
 
-	// shift 特征的大小通常是128, 拼接所有特征作为 kmeans 所需要的数据集合
+	// sift 特征的大小通常是128, 拼接所有特征作为 kmeans 所需要的数据集合
 	for _, item := range resizeList {
 		buf = append(buf, item.DescribMat.Context...)
 		rows += item.DescribMat.Row
 	}
 
 	if rows == 0 {
-		log.Fatal("No features found to run KMeans")
+		slog.Error("No features found to run KMeans")
+		os.Exit(1)
 	}
 
 	// 初始化所有样本的特征点矩阵
 	allDescrib, err := gocv.NewMatFromBytes(rows, 128, gocv.MatTypeCV32FC1, buf)
 	if err != nil {
-		log.Fatalf("Failed to create mat from bytes: %v", err)
+		slog.Error("Failed to create mat from bytes", "error", err)
+		os.Exit(1)
 	}
 	defer allDescrib.Close()
 
@@ -268,16 +278,25 @@ func Kmeans(svc butterflysvc.ButterflyService) {
 	defer trainingData.Close()
 
 	for _, item := range resizeList {
-		imgTag, _ := strconv.Atoi(item.Type)
-		bow := buildBowHistogram(&labels, k, start, item.DescribMat.Row, imgTag)
-		defer bow.Close()
+		func() {
+			imgTag, err := strconv.Atoi(item.Type)
+			if err != nil {
+				slog.Error("Failed to convert item type to int", "id", item.ID, "type", item.Type, "error", err)
+				return
+			}
+			bow := buildBowHistogram(&labels, k, start, item.DescribMat.Row, imgTag)
+			defer bow.Close()
 
-		start += item.DescribMat.Row
-		if trainingData.Cols() == 0 {
-			trainingData = bow.Clone()
-		} else {
-			gocv.Vconcat(trainingData, bow, &trainingData)
-		}
+			start += item.DescribMat.Row
+			if trainingData.Cols() == 0 {
+				trainingData = bow.Clone()
+			} else {
+				temp := gocv.NewMat()
+				gocv.Vconcat(trainingData, bow, &temp)
+				trainingData.Close()
+				trainingData = temp
+			}
+		}()
 	}
 
 	// 对 trainingData 的每一行进行 L2 归一化
@@ -291,7 +310,7 @@ func Kmeans(svc butterflysvc.ButterflyService) {
 
 	slog.Info("Training data generated", "Rows", trainingData.Rows(), "Cols", trainingData.Cols())
 	imgutils.SaveMatToCSV(trainingData, "data.csv")
-	fmt.Println("Training data saved to data.csv")
+	slog.Info("Training data saved to data.csv")
 }
 
 func buildBowHistogram(labels *gocv.Mat, k, start, num, tag int) gocv.Mat {

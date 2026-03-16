@@ -22,7 +22,7 @@ go run app/scripts/init_butterfly_img/main.go [flags]
 - `insert`: Scans the dataset path and inserts images with their corresponding masks into the database.
 - `verify`: Checks if all images in the `images` folder have a corresponding mask in the `segmentations` folder.
 - `display`: Retrieves a sample image from the database and displays it in a window (requires GUI support).
-- `shift`: Extracts SIFT features from resized images and updates them in the database.
+- `sift`: Extracts SIFT features from resized images and updates them in the database.
 - `kmeans`: Performs KMeans clustering on all extracted features and generates a Bag-of-Words (BoW) training dataset (`data.csv`).
 
 ## Example

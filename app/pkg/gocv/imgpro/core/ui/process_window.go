@@ -46,7 +46,7 @@ func (w *ProcessingWindow) LoadImageFromPath(path string) error {
 	}
 	w.src = &src
 	w.dst = imgutils.NewSomeMat(*w.src)
-	src.CopyTo(w.dst)
+	w.src.CopyTo(w.dst)
 	return nil
 }
 
@@ -55,9 +55,10 @@ func (w *ProcessingWindow) LoadImageFromMat(img gocv.Mat) {
 	if img.Empty() {
 		return
 	}
-	w.src = &img
+	src := img.Clone()
+	w.src = &src
 	w.dst = imgutils.NewSomeMat(*w.src)
-	img.CopyTo(w.dst)
+	w.src.CopyTo(w.dst)
 }
 
 func (w *ProcessingWindow) Display() {
